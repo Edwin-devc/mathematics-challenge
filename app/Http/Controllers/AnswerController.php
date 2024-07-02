@@ -2,18 +2,17 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Answer;
 use Illuminate\Http\Request;
-use App\Models\Representative;
 
-class RepresentativeController extends Controller
+class AnswerController extends Controller
 {
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
-        $representatives = Representative::with('school')->get();
-        return view('admin.representatives', ['representatives' => $representatives]);
+        //
     }
 
     /**
@@ -35,7 +34,7 @@ class RepresentativeController extends Controller
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
+    public function show(Answer $answer)
     {
         //
     }
@@ -43,7 +42,7 @@ class RepresentativeController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(string $id)
+    public function edit(Answer $answer)
     {
         //
     }
@@ -51,7 +50,7 @@ class RepresentativeController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(Request $request, Answer $answer)
     {
         //
     }
@@ -59,7 +58,7 @@ class RepresentativeController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(string $id)
+    public function destroy(Answer $answer)
     {
         //
     }

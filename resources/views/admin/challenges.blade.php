@@ -11,10 +11,17 @@
     <div class="card w-100">
         <div class="card-body p-4">
             <h5 class="card-title fw-semibold mb-4">Challenges</h5>
-            <button type="button" class="btn btn-secondary text-white btn-sm" data-bs-toggle="modal" data-bs-target="#exampleModal" data-bs-whatever="@mdo"><span><i class="ti ti-plus"></i></span>
-                Add Challenge</button>
+            <div class="btn-group">
+                <button type="button" class="btn btn-success text-white" data-bs-toggle="modal" data-bs-target="#exampleModal" data-bs-whatever="@mdo"><span><i class="ti ti-plus"></i></span>
+                    Add Challenge</button>
+                <button type="button" class="btn btn-primary text-white" data-bs-toggle="modal" data-bs-target="#exampleModalQuestions" data-bs-whatever="@mdo"><span><i class="ti ti-plus"></i></span>
+                    Add Questions</button>
+                <button type="button" class="btn btn-secondary text-white" data-bs-toggle="modal" data-bs-target="#exampleModalAnswers" data-bs-whatever="@mdo"><span><i class="ti ti-plus"></i></span>
+                    Add Answers</button>
+            </div>
 
-            {{-- form modal --}}
+
+            {{-- form modal for adding challenge --}}
             <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
                 <div class="modal-dialog">
                     <div class="modal-content">
@@ -61,6 +68,83 @@
                                     <div class="modal-footer">
                                         <button type="button" class="btn btn-danger btn-sm" data-bs-dismiss="modal">Close</button>
                                         <button type="submit" class="btn btn-success btn-sm">Add Challenge</button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+            {{-- end form modal --}}
+
+            {{-- form modal for adding questions to the challenge --}}
+            <div class="modal fade" id="exampleModalQuestions" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h1 class="modal-title fs-5" id="exampleModalLabel">Add Questions</h1>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form method="POST" action="{{ route('questions.upload') }}" enctype="multipart/form-data">
+                                @csrf
+                                <div class="row g-3">
+                                    <div class="col-12">
+                                        <select name="challenge_id" class="form-select" required>
+                                            <option value="">Select challenge</option>
+                                            @foreach($challenges as $challenge)
+                                            <option value="{{ $challenge->challenge_id }}">{{ $challenge->title }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="col-12">
+                                        <div class="form-floating">
+                                            <input type="file" class="form-control" id="file" name="file" required />
+                                            {{-- <label for="file">Choose Questions File</label> --}}
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-danger btn-sm" data-bs-dismiss="modal">Close</button>
+                                        <button type="submit" class="btn mtc-btn-primary btn-sm text-white">Add Questions</button>
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+            {{-- end form modal --}}
+            {{-- form modal for adding answers for questions --}}
+            <div class="modal fade" id="exampleModalAnswers" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                <div class="modal-dialog">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h1 class="modal-title fs-5" id="exampleModalLabel">Add Answers</h1>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form method="POST" action="{{ route('challenges.create') }}">
+                                @csrf
+                                <div class="row g-3">
+
+                                    <div class="col-12">
+                                        <select name="room" class="form-select">
+                                            <option value="">Select challenge</option>
+                                            @foreach($challenges as $challenge)
+                                            <option value="{{ $challenge->challenge_id }}">{{ $challenge->title }}</option>
+                                            @endforeach
+                                        </select>
+                                    </div>
+                                    <div class="col-12">
+                                        <input type="file" class="form-control" id="file" name="file" required />
+                                    </div>
+                                    
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-danger btn-sm" data-bs-dismiss="modal">Close</button>
+                                        <button type="submit" class="btn btn-success btn-sm">Add Answers</button>
                                     </div>
                                 </div>
                             </form>
@@ -189,7 +273,7 @@
                                         </div>
                                         <div class="modal-body">
                                             <form method="POST" action="">
-                                                @csrf
+                                                @csrf 
                                                 @method('PUT')
                                                 <div class="row g-3">
                                                     <div class="col-md-6">
@@ -299,47 +383,6 @@
             </div>
         </div>
     </div>
-
-    <!-- end Row 1 -->
-
-
-    {{-- <div class="card">
-            <div class="card-body">
-                <h5 class="card-title fw-semibold mb-4">Bookings</h5>
-                <div class="card">
-                    <div class="card-body p-4">
-
-                    </div>
-                </div>
-                <div class="card">
-                    <div class="card-body p-4">
-                        <button type="button" class="btn btn-primary m-1">Primary</button>
-                        <button type="button" class="btn btn-secondary m-1">Secondary</button>
-                        <button type="button" class="btn btn-success m-1">Success</button>
-                        <button type="button" class="btn btn-danger m-1">Danger</button>
-                        <button type="button" class="btn btn-warning m-1">Warning</button>
-                        <button type="button" class="btn btn-info m-1">Info</button>
-                        <button type="button" class="btn btn-light m-1">Light</button>
-                        <button type="button" class="btn btn-dark m-1">Dark</button>
-                        <button type="button" class="btn btn-link m-1">Link</button>
-                    </div>
-                </div>
-                <h5 class="card-title fw-semibold mb-4">Outline buttons</h5>
-                <div class="card mb-0">
-                    <div class="card-body p-4">
-                        <button type="button" class="btn btn-outline-primary m-1">Primary</button>
-                        <button type="button" class="btn btn-outline-secondary m-1">Secondary</button>
-                        <button type="button" class="btn btn-outline-success m-1">Success</button>
-                        <button type="button" class="btn btn-outline-danger m-1">Danger</button>
-                        <button type="button" class="btn btn-outline-warning m-1">Warning</button>
-                        <button type="button" class="btn btn-outline-info m-1">Info</button>
-                        <button type="button" class="btn btn-outline-light m-1">Light</button>
-                        <button type="button" class="btn btn-outline-dark m-1">Dark</button>
-                        <button type="button" class="btn btn-outline-link m-1">Link</button>
-                    </div>
-                </div>
-            </div>
-        </div> --}}
 
 </div>
 @endsection

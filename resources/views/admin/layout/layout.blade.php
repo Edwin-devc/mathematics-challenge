@@ -5,11 +5,14 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Mathematics Challenge</title>
-    <link rel="shortcut icon" type="image/png" href="{{ url('_admin/assets/images/logos/favicon.png') }}" />
+    <link rel="shortcut icon" type="image/png" href="{{ url('_admin/assets/logo/svg/logo-no-background.svg') }}" />
     <link rel="stylesheet" href="{{ url('_admin/assets/css/styles.min.css') }}" />
+    <link rel="stylesheet" href="{{ url('_admin/assets/css/custom.css') }}" />
     <link rel="stylesheet"
         href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/css/bootstrap-datepicker.min.css">
-
+    
+        <!-- Scripts -->
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
 </head>
 
 <body>
@@ -20,10 +23,11 @@
         <aside class="left-sidebar">
             <!-- Sidebar scroll-->
             <div>
-                <div class="brand-logo d-flex align-items-center justify-content-between">
-                    <a href="./index.html" class="text-nowrap logo-img">
-                        <img src="{{ url('_admin/assets/images/logos/dark-logo.svg') }}" width="180"
-                            alt="" />
+                {{-- center logo --}}
+
+                <div class="brand-logo d-flex align-items-center justify-content-center mt-3">
+                    <a href="#" class="text-nowrap logo-img">
+                        <img class="img-fluid" src="{{ url('_admin/assets/logo/svg/logo-no-background.svg') }}" alt="" width="74px">
                     </a>
                     <div class="close-btn d-xl-none d-block sidebartoggler cursor-pointer" id="sidebarCollapse">
                         <i class="ti ti-x fs-8"></i>
@@ -59,7 +63,7 @@
                         <li class="sidebar-item">
                             <a class="sidebar-link" href="{{ route('admin.challenges') }}" aria-expanded="false">
                                 <span>
-                                    <i class="ti ti-alert-circle"></i>
+                                    <i class="ti ti-tournament"></i>
                                 </span>
                                 <span class="hide-menu">Challenges</span>
                             </a>
@@ -67,11 +71,21 @@
                         <li class="sidebar-item">
                             <a class="sidebar-link" href="{{ route('admin.representatives') }}" aria-expanded="false">
                                 <span>
-                                    <i class="ti ti-cards"></i>
+                                    <i class="ti ti-user-plus"></i>
                                 </span>
                                 <span class="hide-menu">Representatives</span>
                             </a>
                         </li>
+
+                        <li class="sidebar-item">
+                            <a class="sidebar-link" href="{{ route('admin.questions') }}" aria-expanded="false">
+                                <span>
+                                    <i class="ti ti-question-mark"></i>
+                                </span>
+                                <span class="hide-menu">Questions</span>
+                            </a>
+                        </li>
+                        
                         <li class="sidebar-item">
                             <a class="sidebar-link" href="{{ route('admin.answers') }}" aria-expanded="false">
                                 <span>
@@ -80,19 +94,12 @@
                                 <span class="hide-menu">Answers</span>
                             </a>
                         </li>
-                        <li class="sidebar-item">
-                            <a class="sidebar-link" href="{{ route('admin.questions') }}" aria-expanded="false">
-                                <span>
-                                    <i class="ti ti-typography"></i>
-                                </span>
-                                <span class="hide-menu">Questions</span>
-                            </a>
-                        </li>
+                        
 
                         <li class="sidebar-item">
                             <a class="sidebar-link" href="{{ route('admin.participants') }}" aria-expanded="false">
                                 <span>
-                                    <i class="ti ti-typography"></i>
+                                    <i class="ti ti-users"></i>
                                 </span>
                                 <span class="hide-menu">Participants</span>
                             </a>
@@ -120,8 +127,8 @@
                         </li>
                         <li class="nav-item">
                             <a class="nav-link nav-icon-hover" href="javascript:void(0)">
-                                <i class="ti ti-bell-ringing"></i>
-                                <div class="notification bg-primary rounded-circle"></div>
+                                {{-- <i class="ti ti-bell-ringing"></i> --}}
+                                {{-- <div class="notification bg-primary rounded-circle"></div> --}}
                             </a>
                         </li>
                     </ul>
@@ -138,21 +145,21 @@
                                 <div class="dropdown-menu dropdown-menu-end dropdown-menu-animate-up"
                                     aria-labelledby="drop2">
                                     <div class="message-body">
-                                        <a href="javascript:void(0)"
+                                        {{-- <a href="javascript:void(0)"
                                             class="d-flex align-items-center gap-2 dropdown-item">
                                             <i class="ti ti-user fs-6"></i>
                                             <p class="mb-0 fs-3">My Profile</p>
-                                        </a>
-                                        <a href="javascript:void(0)"
+                                        </a> --}}
+                                        <a href="{{ route('profile.edit') }}"
                                             class="d-flex align-items-center gap-2 dropdown-item">
-                                            <i class="ti ti-mail fs-6"></i>
+                                            <i class="ti ti-user fs-6"></i>
                                             <p class="mb-0 fs-3">My Account</p>
                                         </a>
-                                        <a href="javascript:void(0)"
+                                        {{-- <a href="javascript:void(0)"
                                             class="d-flex align-items-center gap-2 dropdown-item">
                                             <i class="ti ti-list-check fs-6"></i>
                                             <p class="mb-0 fs-3">My Task</p>
-                                        </a>
+                                        </a> --}}
                                         <form method="POST" action="{{ route('logout') }}">
                                             @csrf
                                             <x-dropdown-link :href="route('logout')"

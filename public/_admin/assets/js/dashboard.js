@@ -21,7 +21,7 @@ $(function () {
     },
 
 
-    colors: ["#5D87FF", "#49BEFF"],
+    colors: ["#2F5651", "#49BEFF"],
 
 
     plotOptions: {
@@ -138,7 +138,7 @@ $(function () {
     legend: {
       show: false,
     },
-    colors: ["#5D87FF", "#ecf2ff", "#F9F9FD"],
+    colors: ["#2F5651", "#ecf2ff", "#F9F9FD"],
 
     responsive: [
       {

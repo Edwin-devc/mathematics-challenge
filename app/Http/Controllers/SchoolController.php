@@ -38,7 +38,7 @@ class SchoolController extends Controller
 
         Excel::import(new SchoolsImport, $request->file('file'));
 
-        return redirect()->route('admin.schools')->with("success", "Excel file imported successfully.");
+        return redirect()->route('admin.schools')->with("success", "Schools added successfully.");
     }
 
     /**

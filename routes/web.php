@@ -1,10 +1,12 @@
 <?php
 
+use App\Http\Controllers\EmailController;
+use App\Http\Controllers\ParticipantController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\QuestionController;
 use App\Http\Controllers\RepresentativeController;
 use App\Http\Controllers\SchoolController;
 use App\Http\Controllers\ChallengeController;
-use App\Models\Challenge;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -36,9 +38,11 @@ Route::put('/admin/challenges/update/{challenge_id}', [ChallengeController::clas
 Route::delete('/admin/challenges/delete/{challenge_id}', [ChallengeController::class, 'destroy'])->name('admin.challenges.delete');
 
 
-Route::get('/admin/questions', function () {
-    return view('admin.questions');
-})->name('admin.questions');
+// questions
+
+Route::get('/admin/questions', [QuestionController::class, 'index'])->name('admin.questions');
+
+Route::post('/admin/challenges/questions/upload', [QuestionController::class, 'store'])->name('questions.upload');
 
 Route::get('/admin/answers', function () {
     return view('admin.answers');
@@ -46,8 +50,7 @@ Route::get('/admin/answers', function () {
 
 Route::get('/admin/representatives', [RepresentativeController::class, 'index'])->name('admin.representatives');
 
-Route::get('/admin/participants', function () {
-    return view('admin.schools');
-})->name('admin.participants');
+Route::get('/admin/participants', [ParticipantController::class, 'index'])->name('admin.participants');
+
 
 require __DIR__.'/auth.php';

@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 
 class School extends Model
 {
@@ -23,4 +24,8 @@ class School extends Model
         'representative_name'
     ];
     
+    public function representative(): HasOne
+    {
+        return $this->hasOne(Representative::class, 'school_id');
+    }
 }
