@@ -71,7 +71,24 @@ public class Server {
                         } else {
                             out.println("Invalid registration command");
                         }
+                    } else if (request.startsWith("login")) {
+                        if (parts.length == 3) {
+                        String username = parts[1];
+                        int regno;
+                        try {
+                            regno = Integer.parseInt(parts[2].trim());
+                        } catch (NumberFormatException e) {
+                            return "Invalid registration number format.";
+                        }
+                        loggedUsers.put(username, regno);
+                        return applicantManager.login(username, regno);
                     } else {
+                        return "Usage: login <username> <registration_number>";
+                    }
+                    } else if() {
+                        
+                    }
+                    else {
                         out.println("Unknown request");
                     }
                 } catch (IOException e) {
@@ -102,7 +119,7 @@ public class Server {
 
     private static boolean isSchoolRegistered(String schoolRegNumber) {
         try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
-             PreparedStatement stmt = conn.prepareStatement("SELECT * FROM schools WHERE registration_number = ?")) {
+                PreparedStatement stmt = conn.prepareStatement("SELECT * FROM schools WHERE registration_number = ?")) {
             stmt.setString(1, schoolRegNumber);
             try (ResultSet rs = stmt.executeQuery()) {
                 return rs.next();
@@ -114,7 +131,8 @@ public class Server {
         }
     }
 
-    private static boolean registerApplicant(String username, String firstName, String lastName, String email, String dob, String schoolRegNumber, String imageFilePath) {
+    private static boolean registerApplicant(String username, String firstName, String lastName, String email,
+            String dob, String schoolRegNumber, String imageFilePath) {
         System.out.println("Simulating registration process...");
         System.out.println("Username: " + username);
         System.out.println("First Name: " + firstName);
@@ -131,7 +149,8 @@ public class Server {
                 byte[] imageBytes = Files.readAllBytes(imagePath);
                 System.out.println("Read image file successfully, size: " + imageBytes.length + " bytes");
                 try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH, true))) {
-                    writer.write(String.format("Username: %s, First Name: %s, Last Name: %s, Email: %s, Date of Birth: %s, School Registration Number: %s, Image File Path: %s%n",
+                    writer.write(String.format(
+                            "Username: %s, First Name: %s, Last Name: %s, Email: %s, Date of Birth: %s, School Registration Number: %s, Image File Path: %s%n",
                             username, firstName, lastName, email, dob, schoolRegNumber, imageFilePath));
                 } catch (IOException e) {
                     System.out.println("IO error during writing to file: " + e.getMessage());
@@ -150,19 +169,18 @@ public class Server {
         }
     }
 
-    
     private static void sendConfirmationEmail(String recipientEmail, String schoolRegNumber) {
         // Replace with your own SMTP server details
         String senderEmail = "shadianankya979@gmail.com";
         String senderPassword = "zevj fybi gfie mbnw";
         String host = "smtp.gmail.com";
-    
+
         Properties props = new Properties();
         props.put("mail.smtp.auth", "true");
         props.put("mail.smtp.starttls.enable", "true");
         props.put("mail.smtp.host", host);
         props.put("mail.smtp.port", "587");
-    
+
         // Create session with authentication
         Session session = Session.getInstance(props,
                 new javax.mail.Authenticator() {
@@ -170,25 +188,26 @@ public class Server {
                         return new PasswordAuthentication(senderEmail, senderPassword);
                     }
                 });
-    
+
         try {
             // Create a default MimeMessage object
             MimeMessage message = new MimeMessage(session);
-    
+
             // Set From: header field of the header
             message.setFrom(new InternetAddress(senderEmail));
-    
+
             // Set To: header field of the header
-            message.addRecipient(Message.RecipientType.TO, new InternetAddress(getSchoolRepresentativeEmail(schoolRegNumber)));
-    
+            message.addRecipient(Message.RecipientType.TO,
+                    new InternetAddress(getSchoolRepresentativeEmail(schoolRegNumber)));
+
             // Set Subject: header field
             message.setSubject("Confirmation Required for Applicant Registration");
-    
+
             // Now set the actual message
             message.setText("Dear School Representative,\n\n"
                     + "Please confirm the registration of an applicant with school registration number "
                     + schoolRegNumber + ".\n\nBest regards,\nMathematics Challenge Team");
-    
+
             // Send message
             Transport.send(message);
             System.out.println("Email sent successfully to school representative.");
@@ -197,11 +216,11 @@ public class Server {
             mex.printStackTrace();
         }
     }
-    
 
     private static String getSchoolRepresentativeEmail(String schoolRegNumber) {
         try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
-             PreparedStatement stmt = conn.prepareStatement("SELECT representative_email FROM schools WHERE registration_number = ?")) {
+                PreparedStatement stmt = conn
+                        .prepareStatement("SELECT representative_email FROM schools WHERE registration_number = ?")) {
             stmt.setString(1, schoolRegNumber);
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
