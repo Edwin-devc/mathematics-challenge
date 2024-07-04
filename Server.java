@@ -16,7 +16,7 @@ import javax.mail.internet.*;
 public class Server {
     private static final int PORT = 9876;
     private static final String FILE_PATH = "applicants.txt";
-    private static final String DB_URL = "jdbc:mysql://localhost:3306/register";
+    private static final String DB_URL = "jdbc:mysql://localhost:3306/math_challenge";
     private static final String DB_USER = "root";
     private static final String DB_PASSWORD = "";
 
@@ -102,7 +102,7 @@ public class Server {
 
     private static boolean isSchoolRegistered(String schoolRegNumber) {
         try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
-             PreparedStatement stmt = conn.prepareStatement("SELECT * FROM schools WHERE school_registration_number = ?")) {
+             PreparedStatement stmt = conn.prepareStatement("SELECT * FROM schools WHERE registration_number = ?")) {
             stmt.setString(1, schoolRegNumber);
             try (ResultSet rs = stmt.executeQuery()) {
                 return rs.next();
@@ -187,7 +187,7 @@ public class Server {
             // Now set the actual message
             message.setText("Dear School Representative,\n\n"
                     + "Please confirm the registration of an applicant with school registration number "
-                    + schoolRegNumber + ".\n\nBest regards,\nYour Organization");
+                    + schoolRegNumber + ".\n\nBest regards,\nMathematics Challenge Team");
     
             // Send message
             Transport.send(message);
@@ -201,11 +201,11 @@ public class Server {
 
     private static String getSchoolRepresentativeEmail(String schoolRegNumber) {
         try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
-             PreparedStatement stmt = conn.prepareStatement("SELECT email_of_representative FROM schools WHERE school_registration_number = ?")) {
+             PreparedStatement stmt = conn.prepareStatement("SELECT representative_email FROM schools WHERE registration_number = ?")) {
             stmt.setString(1, schoolRegNumber);
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
-                    return rs.getString("email_of_representative");
+                    return rs.getString("representative_email");
                 }
             }
         } catch (SQLException e) {
