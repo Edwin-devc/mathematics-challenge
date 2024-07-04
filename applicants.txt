@@ -7,3 +7,4 @@ Username: Monca, First Name: Nakagwa, Last Name: Monica, Email: mon@gmail.com, D
 Username: Rhoda, First Name: Nakato, Last Name: Rhoda, Email: rho@gmail.com, Date of Birth: 2000-02-02, School Registration Number: 123, Image File Path: C:\Users\SHADIA\Pictures\logo\bb.jpg
 Username: Mahad, First Name: Kintu, Last Name: Mahad, Email: madt@gmail.com, Date of Birth: 2000-03-03, School Registration Number: 1000, Image File Path: C:\Users\SHADIA\Pictures\logo\ss.jpg
 Username: Mark, First Name: Kintu, Last Name: Mark, Email: mark@gmail.com, Date of Birth: 2000-02-02, School Registration Number: 5453, Image File Path: C:\Users\SHADIA\Pictures\logo\rr.png
+Username: Edwin256, First Name: Rwakasiissi, Last Name: Edwin, Email: erwakasiisi@gmail.com, Date of Birth: 20-10-1999, School Registration Number: 220073, Image File Path: ../personal/photos/Rwakasiisi-Edwin.jpeg
