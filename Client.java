@@ -75,7 +75,7 @@ public class Client {
             String response;
             while ((response = in.readLine()) != null) {
                 System.out.println("Server response: " + response);
-                if (response.equals("Registration successful")) {
+                if (response.equals("Registration successful\n Wait for the confirmation email")) {
                     return true;
                 } else if (response.equals("Username already taken, please choose another one")) {
                     return false;
