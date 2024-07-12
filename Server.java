@@ -10,13 +10,15 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Properties;
+import jakarta.mail.*;
+import jakarta.mail.internet.*;
 import javax.mail.*;
-import javax.mail.internet.*;
+import javax.mail.internet.*;;
 
 public class Server {
     private static final int PORT = 9876;
     private static final String FILE_PATH = "applicants.txt";
-    private static final String DB_URL = "jdbc:mysql://localhost:3306/math_challenge";
+    private static final String DB_URL = "jdbc:mysql://localhost:3306/register";
     private static final String DB_USER = "root";
     private static final String DB_PASSWORD = "";
 
@@ -26,8 +28,8 @@ public class Server {
 
             while (true) {
                 try (Socket socket = serverSocket.accept();
-                     BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-                     PrintWriter out = new PrintWriter(socket.getOutputStream(), true)) {
+                        BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+                        PrintWriter out = new PrintWriter(socket.getOutputStream(), true)) {
 
                     String request = in.readLine();
                     System.out.println("Received request: " + request);
@@ -58,8 +60,9 @@ public class Server {
                                 System.out.println("Image File Path: " + imageFilePath);
 
                                 if (isSchoolRegistered(schoolRegNumber)) {
-                                    if (registerApplicant(username, firstName, lastName, email, dob, schoolRegNumber, imageFilePath)) {
-                                        out.println("Registration successful");
+                                    if (registerApplicant(username, firstName, lastName, email, dob, schoolRegNumber,
+                                            imageFilePath)) {
+                                        out.println("Registration successful. Please wait for the confirmation email");
                                         sendConfirmationEmail(email, schoolRegNumber);
                                     } else {
                                         out.println("Registration failed");
@@ -71,24 +74,7 @@ public class Server {
                         } else {
                             out.println("Invalid registration command");
                         }
-                    } else if (request.startsWith("login")) {
-                        if (parts.length == 3) {
-                        String username = parts[1];
-                        int regno;
-                        try {
-                            regno = Integer.parseInt(parts[2].trim());
-                        } catch (NumberFormatException e) {
-                            return "Invalid registration number format.";
-                        }
-                        loggedUsers.put(username, regno);
-                        return applicantManager.login(username, regno);
                     } else {
-                        return "Usage: login <username> <registration_number>";
-                    }
-                    } else if() {
-                        
-                    }
-                    else {
                         out.println("Unknown request");
                     }
                 } catch (IOException e) {
@@ -119,7 +105,8 @@ public class Server {
 
     private static boolean isSchoolRegistered(String schoolRegNumber) {
         try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
-                PreparedStatement stmt = conn.prepareStatement("SELECT * FROM schools WHERE registration_number = ?")) {
+                PreparedStatement stmt = conn
+                        .prepareStatement("SELECT * FROM schools WHERE school_registration_number = ?")) {
             stmt.setString(1, schoolRegNumber);
             try (ResultSet rs = stmt.executeQuery()) {
                 return rs.next();
@@ -206,7 +193,7 @@ public class Server {
             // Now set the actual message
             message.setText("Dear School Representative,\n\n"
                     + "Please confirm the registration of an applicant with school registration number "
-                    + schoolRegNumber + ".\n\nBest regards,\nMathematics Challenge Team");
+                    + schoolRegNumber + ".\n\nBest regards,\nYour Organization");
 
             // Send message
             Transport.send(message);
@@ -219,12 +206,12 @@ public class Server {
 
     private static String getSchoolRepresentativeEmail(String schoolRegNumber) {
         try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
-                PreparedStatement stmt = conn
-                        .prepareStatement("SELECT representative_email FROM schools WHERE registration_number = ?")) {
+                PreparedStatement stmt = conn.prepareStatement(
+                        "SELECT email_of_representative FROM schools WHERE school_registration_number = ?")) {
             stmt.setString(1, schoolRegNumber);
             try (ResultSet rs = stmt.executeQuery()) {
                 if (rs.next()) {
-                    return rs.getString("representative_email");
+                    return rs.getString("email_of_representative");
                 }
             }
         } catch (SQLException e) {
