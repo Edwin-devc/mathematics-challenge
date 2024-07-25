@@ -632,3 +632,282 @@ public class Server {
         }
         return null;
     }
+    // Participant View Challenges
+    public static void viewChallenges(PrintWriter out) {
+        String query = "SELECT title, challenge_id FROM challenges where is_valid ='true'";
+
+        try (
+                Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+                Statement statement = connection.createStatement();) {
+            ResultSet resultSet = statement.executeQuery(query);
+            StringBuilder response = new StringBuilder("Challenges:\n");
+
+            while (resultSet.next()) {
+                int challengeId = resultSet.getInt(("challenge_id"));
+                String challengeName = resultSet.getString("title");
+                response.append("- ").append(challengeName).append(" : ").append(challengeId).append("\n");
+
+            }
+
+            if (response.length() > "Challenges:\n".length()) {
+                out.println(response.toString());
+
+            } else {
+                out.println("No challenges found.");
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            out.println("Error retrieving challenges.");
+        }
+
+    }
+
+    // attemptChallenge command
+    private static Challenge fetchChallengeDetails(int challengeNumber, Statement statement) throws SQLException {
+        // SQL query to fetch challenge details
+        String query = "SELECT challenge_id, title, duration, number_of_questions FROM challenges WHERE challenge_id = "
+                + challengeNumber;
+        ResultSet resultSet = statement.executeQuery(query);
+
+        Challenge challenge = null;
+        if (resultSet.next()) {
+            int challengeId = resultSet.getInt("challenge_id");
+            String challengeName = resultSet.getString("title");
+            int duration = resultSet.getInt("duration");
+            int numberOfQns = resultSet.getInt("number_of_questions");
+            challenge = new Challenge(challengeId, challengeName, duration, numberOfQns);
+        }
+
+        resultSet.close();
+        return challenge;
+    }
+
+    private static List<Question> fetchRandomQuestions(int challengeNumber, Statement statement) throws SQLException {
+        // SQL query to fetch random questions for the selected challenge
+        String query = "SELECT q.question_id, q.text, q.marks, a.answer " +
+                "FROM questions q " +
+                "JOIN answers a ON q.question_id = a.question_id " +
+                "WHERE q.challenge_id = " + challengeNumber +
+                " ORDER BY RAND()"; // Fetch random questions
+
+        ResultSet resultSet = statement.executeQuery(query);
+        List<Question> questions = new ArrayList<>();
+
+        while (resultSet.next()) {
+            int questionId = resultSet.getInt("q.question_id");
+            String questionText = resultSet.getString("q.text");
+            int questionMarks = resultSet.getInt("q.marks");
+            String answerText = resultSet.getString("a.answer");
+            questions.add(new Question(questionId, questionText, questionMarks, answerText));
+        }
+
+        resultSet.close();
+        return questions;
+    }
+
+    private static void handleChallengeAttempt(Challenge challenge, List<Question> questions, PrintWriter out,
+            BufferedReader in, int participantId) throws IOException {
+        int totalScore = 0;
+        long startTime = System.currentTimeMillis();
+        long endTime = startTime + challenge.getDuration() * 60000; // duration in minutes
+
+        for (int i = 0; i < questions.size(); i++) {
+            if (System.currentTimeMillis() > endTime) {
+                out.println("Time's up! Challenge closed.");
+                break;
+            }
+
+            Question question = questions.get(i);
+
+            long questionTimeStart = System.currentTimeMillis();
+
+            out.println("Remaining Questions: " + (questions.size() - i));
+            out.println("Time left: " + (endTime - System.currentTimeMillis()) / 1000 + " seconds");
+            out.println("Text: " + question.getQuestionText());
+            out.println("Marks: " + question.getQuestionMarks());
+            out.println("Instructions: Type your answer, type '-' if you do not know");
+            out.println("Your answer: ");
+            String userAnswer = in.readLine().trim();
+
+            long questionTimeTaken = (System.currentTimeMillis() - questionTimeStart) / 1000; // Time taken for the
+                                                                                              // question in seconds
+
+            if (userAnswer.equals(question.getAnswerText())) {
+                totalScore += question.getQuestionMarks();
+            } else if (userAnswer.equals("-")) {
+                out.println("Score is 0");
+            } else {
+                totalScore -= 3; // Deduct 3 marks for wrong answer
+            }
+            question.setQuestionTimeTaken(questionTimeTaken);
+        }
+
+        long totalTimeTaken = (System.currentTimeMillis() - startTime) / 1000;
+        out.println("Challenge completed!");
+        out.println("Total Score: " + totalScore);
+        out.println("Total Time Taken: " + totalTimeTaken + " seconds");
+
+        // Insert attempt details into the database
+
+        try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+                Statement statement = connection.createStatement()) {
+
+            String insertQuery = String.format(
+                    "INSERT INTO attempts (participant_id, challenge_id, start_time, end_time, total_time_taken, total_score) "
+                            +
+                            "VALUES (%d, %d, '%s', '%s', %d, %d)",
+                    participantId, challenge.getChallengeId(), new Timestamp(startTime),
+                    new Timestamp(System.currentTimeMillis()),
+                    totalTimeTaken,
+                    totalScore);
+            int rowsInserted = statement.executeUpdate(insertQuery);
+            if (rowsInserted > 0) {
+                out.println("Attempt details saved successfully.");
+                String updateQuery = String.format(
+                        "UPDATE participants " +
+                                "SET total_attempts = total_attempts + 1, total_challenges = total_challenges + 1 " +
+                                "WHERE participant_id = %d",
+                        participantId);
+                int rowsUpdated = statement.executeUpdate(updateQuery);
+                if (rowsUpdated > 0) {
+                    out.println("Participant's total attempts and total challenges updated successfully.");
+                } else {
+                    out.println("Failed to update participant's total attempts and total challenges.");
+                }
+            } else {
+                out.println("Failed to save attempt details.");
+            }
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+            out.println("Error saving attempt details to the database.");
+        }
+        // display report to the client
+        generateReport(questions, totalScore, totalTimeTaken, out);
+
+    }
+
+    private static void generateReport(List<Question> questions, int totalScore, long totalTimeTaken, PrintWriter out) {
+        // report generation logic here
+
+        out.println("Report:");
+        out.println("Total Score: " + totalScore);
+        out.println("Total Time Taken: " + totalTimeTaken + " seconds");
+
+        // Print details for each question attempted
+        for (Question question : questions) {
+            out.println("Question ID: " + question.getQuestionId());
+            out.println("Text: " + question.getQuestionText());
+            out.println("Marks: " + question.getQuestionMarks());
+            out.println("Time taken: " + question.getQuestionTimeTaken() + " seconds");
+            // Separate questions
+        }
+        out.println();
+
+    }
+
+    private static int getAttemptCount(int participantId, int challengeId) {
+        String query = String.format("SELECT COUNT(*) FROM attempts WHERE participant_id = %d AND challenge_id = %d",
+                participantId, challengeId);
+        try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+                Statement statement = connection.createStatement();
+                ResultSet resultSet = statement.executeQuery(query)) {
+
+            if (resultSet.next()) {
+                return resultSet.getInt(1);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return 0;
+    }
+
+    public static class Challenge {
+        private int challengeId;
+        private String challengeName;
+        private int duration;
+        private int numberOfQns;
+
+        public Challenge(int challengeId, String challengeName, int duration, int numberOfQns) {
+            this.challengeId = challengeId;
+            this.challengeName = challengeName;
+            this.duration = duration;
+            this.numberOfQns = numberOfQns;
+        }
+
+        public int getChallengeId() {
+            return challengeId;
+        }
+
+        public String getChallengeName() {
+            return challengeName;
+        }
+
+        public int getDuration() {
+            return duration;
+        }
+
+        public int getNumberOfQns() {
+            return numberOfQns;
+        }
+
+        @Override
+        public String toString() {
+            return "Challenge ID: " + challengeId + ", Name: " + challengeName + ", Duration: " + duration
+                    + " minutes, Number of Questions: " + numberOfQns;
+        }
+    }
+
+    public static class Question {
+        private int questionId;
+        private String questionText;
+        private int questionMarks;
+        private String answerText;
+        private long presentationTime;
+        private long questionTimeTaken;
+
+        public Question(int questionId, String questionText, int questionMarks, String answerText) {
+            this.questionId = questionId;
+            this.questionText = questionText;
+            this.questionMarks = questionMarks;
+            this.answerText = answerText;
+            this.presentationTime = System.currentTimeMillis(); // Initialize with current time
+        }
+
+        public int getQuestionId() {
+            return questionId;
+        }
+
+        public String getQuestionText() {
+            return questionText;
+        }
+
+        public int getQuestionMarks() {
+            return questionMarks;
+        }
+
+        public String getAnswerText() {
+            return answerText;
+        }
+
+        public long getPresentationTime() {
+            return presentationTime;
+        }
+
+        public long getQuestionTimeTaken() {
+            return questionTimeTaken;
+        }
+
+        public void setQuestionTimeTaken(long questionTimeTaken) {
+            this.questionTimeTaken = questionTimeTaken;
+        }
+
+        @Override
+        public String toString() {
+            return "Question ID: " + questionId + ", Text: " + questionText + ", Marks: " + questionMarks + ", Answer: "
+                    + answerText;
+        }
+    }
+
+}
