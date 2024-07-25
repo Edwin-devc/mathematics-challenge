@@ -21,7 +21,7 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
-
+/* email packages */
 import javax.mail.*;
 import javax.mail.internet.*;
 
@@ -909,5 +909,4 @@ public class Server {
                     + answerText;
         }
     }
-
 }
