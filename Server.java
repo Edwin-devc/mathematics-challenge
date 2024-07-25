@@ -168,3 +168,248 @@ public class Server {
 
 
     
+        // REPRESENTATIVE METHODS
+        public static String representativeLogin(String username, String password, PrintWriter out) {
+            username = username.trim();
+            password = password.trim();
+    
+            String query = "SELECT s.registration_number FROM representatives r JOIN schools s ON r.school_id = s.school_id WHERE r.email = ? AND r.password = ?";
+    
+            try (Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+                    PreparedStatement ps = connection.prepareStatement(query)) {
+    
+                ps.setString(1, username);
+                ps.setString(2, password);
+    
+                ResultSet rs = ps.executeQuery();
+                if (rs.next()) {
+                    String registrationNumber = rs.getString("registration_number");
+                    out.println("Login successful!");
+                    return registrationNumber;
+                } else {
+                    out.println("Invalid login credentials");
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+                out.println("Error during login");
+            }
+            return null;
+        }
+    
+        private static void handleRepresentativeCommands(Connection connection) throws IOException {
+    
+            while (true) {
+                String choice = in.readLine();
+    
+                switch (choice) {
+                    case "1":
+                        List<String> applicants = ApplicantManager.readApplicants();
+                        displayApplicants(applicants);
+                        break;
+                    case "2":
+                        out.println("Enter command: ");
+                        String command = in.readLine();
+                        confirmApplicant(command, connection);
+                        break;
+                    default:
+                        out.println("Invalid choice. Please try again.");
+                }
+            }
+        }
+    
+        private static void displayApplicants(List<String> applicants) {
+    
+            for (String applicant : applicants) {
+                out.println(applicant);
+            }
+        }
+    
+        private static void confirmApplicant(String command, Connection connection) {
+            String[] parts = command.split(" ");
+            if (parts.length != 3 || !parts[0].equals("confirm")) {
+                out.println("Invalid command. Use: confirm yes/no username");
+                return;
+            }
+            String action = parts[1];
+            String username = parts[2];
+    
+            List<String> applicants = ApplicantManager.readApplicants();
+            String applicantDetails = null;
+            for (String applicant : applicants) {
+                if (applicant.contains(username)) {
+                    applicantDetails = applicant;
+                    break;
+                }
+            }
+    
+            if (applicantDetails == null) {
+                out.println("Applicant not found.");
+                return;
+            }
+    
+            String[] details = applicantDetails.split(",");
+    
+            String applicantRegNo = details[5].replace("School Registration Number:", "").trim();
+            String representativeRegNo = representativeSchoolRegistrationNumber.trim();
+    
+            if (details.length < 6 || !applicantRegNo.equals(representativeRegNo)) {
+                out.println("You can only accept/reject applicants that belong to your school.");
+                return;
+            }
+    
+            if (action.equals("yes")) {
+                activateApplicant(details, connection);
+            } else if (action.equals("no")) {
+                rejectApplicant(details, connection);
+            } else {
+                out.println("Invalid action. Use: confirm yes/no username");
+            }
+    
+            ApplicantManager.removeApplicant(username);
+        }
+    
+        private static void activateApplicant(String[] details, Connection connection) {
+            try {
+    
+                // Extract and clean the details
+                String username = details[0].split(":")[1].trim();
+                String firstname = details[1].split(":")[1].trim();
+                String lastname = details[2].split(":")[1].trim();
+                String email = details[3].split(":")[1].trim();
+                String dateOfBirth = details[4].split(":")[1].trim();
+                String schoolRegistrationNumber = details[5].split(":")[1].trim();
+                String imagePath = details[6].split(":")[1].trim();
+    
+                String randomPassword = ApplicantManager.generateRandomPassword();
+    
+                String insertParticipant = "INSERT INTO participants (username, firstname, lastname, email, date_of_birth, school_registration_number, image_path, password) VALUES (?, ?, ?, ?, ?, ?, ?, ?)";
+                PreparedStatement insertPs = connection.prepareStatement(insertParticipant);
+                insertPs.setString(1, username); // username
+                insertPs.setString(2, firstname); // firstname
+                insertPs.setString(3, lastname); // lastname
+                insertPs.setString(4, email); // email
+                insertPs.setString(5, dateOfBirth); // date_of_birth
+                insertPs.setString(6, schoolRegistrationNumber); // school_registration_number
+                insertPs.setString(7, imagePath); // image_path
+                insertPs.setString(8, randomPassword); // password
+                insertPs.executeUpdate();
+    
+                sendEmailNotification(email, "Application Accepted ",
+                        "Your application has been accepted.Your password is: " + randomPassword);
+                out.println("Applicant " + details[0] + " activated.");
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+    
+        private static void rejectApplicant(String[] details, Connection connection) {
+            try {
+    
+                // Extract and clean the details
+                String username = details[0].split(":")[1].trim();
+                String firstname = details[1].split(":")[1].trim();
+                String lastname = details[2].split(":")[1].trim();
+                String email = details[3].split(":")[1].trim();
+                String dateOfBirth = details[4].split(":")[1].trim();
+                String schoolRegistrationNumber = details[5].split(":")[1].trim();
+                String imagePath = details[6].split(":")[1].trim();
+    
+                String insertRejected = "INSERT INTO rejected (username, firstname, lastname, email, date_of_birth, school_registration_number, image_path) VALUES (?, ?, ?, ?, ?, ?, ?)";
+                PreparedStatement insertPs = connection.prepareStatement(insertRejected);
+                insertPs.setString(1, username); // username
+                insertPs.setString(2, firstname); // firstname
+                insertPs.setString(3, lastname); // lastname
+                insertPs.setString(4, email); // email
+                insertPs.setString(5, dateOfBirth); // date_of_birth
+                insertPs.setString(6, schoolRegistrationNumber); // school_registration_number
+                insertPs.setString(7, imagePath); // image_path
+                insertPs.executeUpdate();
+    
+                sendEmailNotification(email, "Application Declined", "Your application has been rejected.");
+                out.println("Applicant " + details[0] + " rejected.");
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+    
+        public static void sendEmailNotification(String recipient, String subject, String content) {
+            // Configure properties for SMTP
+            Properties properties = new Properties();
+            properties.put("mail.smtp.auth", "true");
+            properties.put("mail.smtp.starttls.enable", "true");
+            properties.put("mail.smtp.host", SMTP_HOST);
+            properties.put("mail.smtp.port", "587");
+    
+            // Create session
+            Session session = Session.getInstance(properties, new Authenticator() {
+                protected PasswordAuthentication getPasswordAuthentication() {
+                    return new PasswordAuthentication(SENDER_EMAIL, SENDER_PASSWORD);
+                }
+            });
+    
+            try {
+                // Create message
+                Message message = new MimeMessage(session);
+                message.setFrom(new InternetAddress(SENDER_EMAIL));
+                message.setRecipients(Message.RecipientType.TO, InternetAddress.parse(recipient));
+                message.setText(content);
+                message.setSubject(subject);
+    
+                // Send message
+                Transport.send(message);
+                System.out.println("Email sent successfully to: " + recipient);
+            } catch (MessagingException e) {
+                throw new RuntimeException("Failed to send email to " + recipient, e);
+            }
+        }
+    
+        public class ApplicantManager {
+    
+            private static final String APPLICANTS_FILE = "applicants.txt";
+            private static final String CHARACTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+            private static final int PASSWORD_LENGTH = 10;
+            private static final SecureRandom RANDOM = new SecureRandom();
+    
+            public static List<String> readApplicants() {
+                List<String> applicants = new ArrayList<>();
+    
+                try (BufferedReader br = new BufferedReader(new FileReader(APPLICANTS_FILE))) {
+                    String line;
+                    while ((line = br.readLine()) != null) {
+                        applicants.add(line);
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                return applicants;
+            }
+    
+            public static void removeApplicant(String username) {
+                List<String> applicants = readApplicants();
+                try (BufferedWriter bw = new BufferedWriter(new FileWriter(APPLICANTS_FILE))) {
+                    for (String applicant : applicants) {
+                        if (!applicant.contains(username)) {
+                            bw.write(applicant);
+                            bw.newLine();
+                        }
+                    }
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+    
+            public static String generateRandomPassword() {
+                StringBuilder password = new StringBuilder(PASSWORD_LENGTH);
+                for (int i = 0; i < PASSWORD_LENGTH; i++) {
+                    password.append(CHARACTERS.charAt(RANDOM.nextInt(CHARACTERS.length())));
+                }
+                return password.toString();
+            }
+        }
+    
+        //
+        //
+        //
+        //
+        // Participant Login
+        
