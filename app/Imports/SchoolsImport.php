@@ -40,7 +40,7 @@ class SchoolsImport implements ToModel, WithHeadingRow
 
 
         // To send emails after registration
-        // Mail::to($representative->email)->send(new WelcomeEmail($representative, $school->name));
+        Mail::to($representative->email)->send(new WelcomeEmail($representative, $school->name));
 
         return [$school, $representative];
     }

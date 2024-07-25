@@ -56,7 +56,7 @@
                         @foreach ($participants as $participant)
                         <tr>
                             <td class="border-bottom-0">
-                                <h6 class="fw-normal mb-0">{{ $participant->id }}</h6>
+                                <h6 class="fw-normal mb-0">{{ $participant->participant_id }}</h6>
                             </td>
                             <td class="border-bottom-0">
                                 <h6 class="fw-normal mb-0">{{ $participant->username }}</h6>
@@ -74,7 +74,8 @@
                                 <p class="mb-0 fw-normal">{{ $participant->date_of_birth }}</p>
                             </td>
                             <td class="border-bottom-0">
-                                <p class="mb-0 fw-normal">{{ $participant->image_path}}</p>
+                                <img src="{{ url("uploads/$participant->image_path") }}" alt="image" width="50px" height="50px">
+                                {{-- <p class="mb-0 fw-normal">{{ $participant->image_path}}</p> --}}
                             </td>
                             <td class="border-bottom-0">
                                 <p class="mb-0 fw-normal">{{ $participant->school_registration_number }}</p>
@@ -82,29 +83,35 @@
 
                             <td class="border-bottom-0">
                                 <p class="fw-bold mb-0 text-center">
-                                    <span class="text-success" data-bs-toggle="modal" data-bs-target="#exampleModalview{{ $representative->representative_id }}">
+                                    <span class="text-success" data-bs-toggle="modal" data-bs-target="#exampleModalview{{ $participant->participant_id }}">
                                         <b><i class="ti ti-eye"> view</i></b>
                                     </span>
                                 </p>
                             </td>
 
                             <!-- view Modal -->
-                            <div class="modal fade" id="exampleModalview{{ $participant->representative_id}}" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                            <div class="modal fade" id="exampleModalview{{ $participant->participant_id}}" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
                                 <div class="modal-dialog modal-dialog-centered">
                                     <div class="modal-content">
                                         <div class="modal-header">
-                                            <h1 class="modal-title fs-5" id="exampleModalLabel{{ $participant->representative_id }}">Representative Details
+                                            <h1 class="modal-title fs-5" id="exampleModalLabel{{ $participant->participant_id }}">Participant Details
                                             </h1>
                                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                         </div>
-                                        <div class="modal-body">
-                                            <p><span class="text-primary">ID: </span>{{ $participant->representative_id }}</p>
-                                            <p><span class="text-primary">Name: </span>{{ $participant->name}}
-                                            </p>
-                                            <p><span class="text-primary">Email:
-                                                </span>{{ $participant->email }}</p>
-                                            <p><span class="text-primary">School:
-                                                </span>{{ $participant->school->name }}</p>
+                                        <div class="modal-body d-flex justify-content-between">
+                                            <div class="col-5">
+                                                <img src="{{ url("uploads/$participant->image_path") }}" alt="" width="200px" height="200px">
+                                            </div>
+                                            <div class="col-6">
+                                                <p><span class="text-primary">ID: </span>{{ $participant->participant_id }}</p>
+                                                <p><span class="text-primary">Name: </span>{{ $participant->firstname}}
+                                                </p>
+                                                <p><span class="text-primary">Email:
+                                                    </span>{{ $participant->email }}</p>
+                                                <p><span class="text-primary">Reg:
+                                                    </span>{{ $participant->school_registration_number }}</p>
+                                            </div>
+
                                         </div>
                                         <div class="modal-footer">
                                             <button type="button" class="btn btn-primary btn-sm" data-bs-dismiss="modal">Close</button>
@@ -124,5 +131,3 @@
 
 </div>
 @endsection
-
-

@@ -6,19 +6,15 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class Answer extends Model
+class Attempt extends Model
 {
     use HasFactory;
+    protected $table = 'attempts';
+    protected $primaryKey = 'attempt_id';
 
-    protected $fillable = [
-        'challenge_id',
-        'question_id',
-        'answer'
-    ];
-
-    public function question(): BelongsTo
+    public function participant(): BelongsTo
     {
-        return $this->belongsTo(Question::class, 'question_id');
+        return $this->belongsTo(Participant::class, 'participant_id');
     }
 
     public function challenge(): BelongsTo

@@ -11,6 +11,8 @@ return new class extends Migration
      */
     public function up(): void
     {
+        Schema::disableForeignKeyConstraints();
+
         Schema::create('rejected', function (Blueprint $table) {
             $table->id();
             $table->string('username')->unique();
@@ -19,10 +21,13 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->date('date_of_birth');
             $table->string('school_registration_number');
+            $table->string('image_path');
             $table->timestamps();
 
             $table->foreign('school_registration_number')->references('registration_number')->on('schools')->onDelete('cascade');
         });
+
+        Schema::enableForeignKeyConstraints();
     }
 
     /**
@@ -30,6 +35,10 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('rejecteds');
+        Schema::disableForeignKeyConstraints();
+
+        Schema::dropIfExists('rejected');
+
+        Schema::enableForeignKeyConstraints();
     }
 };

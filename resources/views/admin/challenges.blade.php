@@ -30,8 +30,9 @@
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
-                            <form method="POST" action="{{ route('challenges.create') }}">
+                            <form id="challenge_form" method="POST" action="{{ route('challenges.create') }}">
                                 @csrf
+                                <div class="text-center error_msg mb-2"></div>
                                 <div class="row g-3">
                                     <div class="col-md-6">
                                         <div class="form-floating">
@@ -104,7 +105,7 @@
                                             {{-- <label for="file">Choose Questions File</label> --}}
                                         </div>
                                     </div>
-                                    
+
                                     <div class="modal-footer">
                                         <button type="button" class="btn btn-danger btn-sm" data-bs-dismiss="modal">Close</button>
                                         <button type="submit" class="btn mtc-btn-primary btn-sm text-white">Add Questions</button>
@@ -126,12 +127,12 @@
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
-                            <form method="POST" action="{{ route('challenges.create') }}">
+                            <form method="POST" action="{{ route('answers.upload') }}" enctype="multipart/form-data">
                                 @csrf
                                 <div class="row g-3">
 
                                     <div class="col-12">
-                                        <select name="room" class="form-select">
+                                        <select name="challenge_id" class="form-select">
                                             <option value="">Select challenge</option>
                                             @foreach($challenges as $challenge)
                                             <option value="{{ $challenge->challenge_id }}">{{ $challenge->title }}</option>
@@ -141,7 +142,7 @@
                                     <div class="col-12">
                                         <input type="file" class="form-control" id="file" name="file" required />
                                     </div>
-                                    
+
                                     <div class="modal-footer">
                                         <button type="button" class="btn btn-danger btn-sm" data-bs-dismiss="modal">Close</button>
                                         <button type="submit" class="btn btn-success btn-sm">Add Answers</button>
@@ -273,7 +274,7 @@
                                         </div>
                                         <div class="modal-body">
                                             <form method="POST" action="">
-                                                @csrf 
+                                                @csrf
                                                 @method('PUT')
                                                 <div class="row g-3">
                                                     <div class="col-md-6">
@@ -332,7 +333,7 @@
                                         </div>
                                         <div class="modal-body">
                                             <p>Are you sure you want to delete {{ $challenge->name }}?</p>
-                                            <form action="" method="POST" style="display:inline;" class="delete-form">
+                                            <form action="{{ route('admin.challenges.delete', ['challenge_id' => $challenge->challenge_id]) }}" method="POST" style="display:inline;" class="delete-form">
                                                 @csrf
                                                 @method('DELETE')
                                                 <div class="modal-footer">
@@ -422,6 +423,33 @@
             , todayHighlight: true
         });
     });
+
+    const form = document.getElementById('challenge_form');
+    form.addEventListener('submit', (e) => {
+        validate_date(e);
+    });
+
+    function convertToDate(dateStr) {
+        const [day, month, year] = dateStr.split('/').map(Number);
+        return new Date(year, month - 1, day); // Month is zero-indexed
+    }
+
+    function validate_date(e) {
+        const startDateStr = document.forms['challenge_form'].start_date.value;
+        const endDateStr = document.forms['challenge_form'].end_date.value;
+
+        // Convert date strings to Date objects
+        const startDate = convertToDate(startDateStr);
+        const endDate = convertToDate(endDateStr);
+
+        // Check if end date is before start date
+        if (endDate < startDate) {
+            e.preventDefault();
+            const errormsg = document.querySelector(".error_msg");
+            errormsg.innerHTML = "End Date cannot be before Start Date";
+            errormsg.style.color = 'red';
+        }
+    }
 
 </script>
 @endsection

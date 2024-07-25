@@ -1,223 +1,170 @@
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.security.SecureRandom;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.sql.Statement;
+import java.sql.Timestamp;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Properties;
-import jakarta.mail.*;
-import jakarta.mail.internet.*;
+
 import javax.mail.*;
-import javax.mail.internet.*;;
+import javax.mail.internet.*;
 
 public class Server {
-    private static final int PORT = 9876;
+    /* database variables */
+    public static final String DB_URL = "jdbc:mysql://localhost:3306/math_challenge";
+    public static final String DB_USER = "root";
+    public static final String DB_PASSWORD = "";
+
+    /* socket variables */
+    private static ServerSocket serverSocket;
+    private static Socket clientSocket;
+    private static BufferedReader in = null;
+    private static PrintWriter out;
+
+    /* class level variable */
+    private static Integer participantId = null;
     private static final String FILE_PATH = "applicants.txt";
-    private static final String DB_URL = "jdbc:mysql://localhost:3306/register";
-    private static final String DB_USER = "root";
-    private static final String DB_PASSWORD = "";
+    private static String userType;
+    private static String representativeSchoolRegistrationNumber = null;
 
-    public static void main(String[] args) {
-        try (ServerSocket serverSocket = new ServerSocket(PORT)) {
-            System.out.println("Server is listening on port " + PORT);
+    /* email variables */
+    private static final String SENDER_EMAIL = "essaotys5@gmail.com";
+    private static final String SENDER_PASSWORD = "xqaz jyix vzsl qdgp";
+    private static final String SMTP_HOST = "smtp.gmail.com";
 
-            while (true) {
-                try (Socket socket = serverSocket.accept();
-                        BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-                        PrintWriter out = new PrintWriter(socket.getOutputStream(), true)) {
+    public static void main(String[] args) throws ClassNotFoundException, IOException {
 
-                    String request = in.readLine();
-                    System.out.println("Received request: " + request);
+        Class.forName("com.mysql.cj.jdbc.Driver");
 
-                    if ("CHECK_DB_CONNECTION".equals(request)) {
-                        out.println("Database connection checking is disabled");
-                    } else if (request.startsWith("REGISTER")) {
-                        String[] parts = request.split(" ", 8);
-                        if (parts.length == 8) {
-                            String username = parts[1];
-                            String firstName = parts[2];
-                            String lastName = parts[3];
-                            String email = parts[4];
-                            String dob = parts[5];
-                            String schoolRegNumber = parts[6];
-                            String imageFilePath = parts[7];
+        serverSocket = new ServerSocket(1234);
+        System.out.println("Server is running. Waiting for a client to connect...");
 
-                            if (isUsernameTaken(username)) {
-                                out.println("Username already taken, please choose another one");
+        clientSocket = serverSocket.accept();
+        System.out.println("Client connected.");
+
+        in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+        out = new PrintWriter(clientSocket.getOutputStream(), true);
+
+        String inputLine;
+
+        try (
+                Connection connection = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
+                Statement statement = connection.createStatement()) {
+            while ((inputLine = in.readLine()) != null) {
+
+                String[] command = inputLine.split(" ");
+                switch (command[0]) {
+                    case "login_as":
+                        // login_as logic
+                        if (command.length == 2) {
+                            userType = command[1];
+                            if (userType.equals("participant") || userType.equals("representative")) {
+                                out.println("acknowledged");
+                                out.println(userType);
                             } else {
-                                System.out.println("Registering applicant with the following details:");
-                                System.out.println("Username: " + username);
-                                System.out.println("First Name: " + firstName);
-                                System.out.println("Last Name: " + lastName);
-                                System.out.println("Email: " + email);
-                                System.out.println("Date of Birth: " + dob);
-                                System.out.println("School Registration Number: " + schoolRegNumber);
-                                System.out.println("Image File Path: " + imageFilePath);
-
-                                if (isSchoolRegistered(schoolRegNumber)) {
-                                    if (registerApplicant(username, firstName, lastName, email, dob, schoolRegNumber,
-                                            imageFilePath)) {
-                                        out.println("Registration successful. Please wait for the confirmation email");
-                                        sendConfirmationEmail(email, schoolRegNumber);
-                                    } else {
-                                        out.println("Registration failed");
-                                    }
-                                } else {
-                                    out.println("Your school is not among the registered schools");
-                                }
+                                out.println("Invalid Command");
                             }
                         } else {
-                            out.println("Invalid registration command");
+                            out.println("Invalid Command Length for login_as");
                         }
-                    } else {
-                        out.println("Unknown request");
-                    }
-                } catch (IOException e) {
-                    System.out.println("Server exception: " + e.getMessage());
-                    e.printStackTrace();
+                        break;
+
+                    case "login":
+                        if (command.length == 3) {
+                            if (userType == null) {
+                                out.println("Please specify user type with 'login_as' command first.");
+                            } else if (userType.equals("participant")) {
+                                participantId = participantLogin(command[1], command[2], out);
+                            } else if (userType.equals("representative")) {
+                                representativeSchoolRegistrationNumber = representativeLogin(command[1], command[2],
+                                        out);
+                                if (representativeSchoolRegistrationNumber != null) {
+                                    handleRepresentativeCommands(connection);
+                                }
+                            } else {
+                                out.println("Invalid user type");
+                            }
+                        } else {
+                            out.println("Invalid command length for login");
+                        }
+                        break;
+
+                    case "Register":
+                        handleRegisterRequest(command, out);
+                        break;
+
+                    case "ViewChallenges":
+                        viewChallenges(out);
+
+                        break;
+
+                    case "attemptChallenge":
+                        if (command.length == 2) {
+                            if (participantId != null) {
+                                int challengeNumber = Integer.parseInt(command[1]);
+
+                                // Check attempt count
+                                int attemptCount = getAttemptCount(participantId, challengeNumber);
+                                if (attemptCount >= 3) {
+                                    out.println("You have exhausted your maximum attempts for this challenge.");
+                                    break;
+                                }
+
+                                out.println("You chose to attempt challenge: " + challengeNumber);
+
+                                // Fetch challenge details
+                                Challenge challenge = fetchChallengeDetails(challengeNumber, statement);
+
+                                // Fetch random questions for the selected challenge
+                                List<Question> questions = fetchRandomQuestions(challengeNumber, statement);
+
+                                // Handle the challenge attempt
+                                handleChallengeAttempt(challenge, questions, out, in, participantId);
+
+                            } else {
+                                out.println("Login required to attempt challenges.");
+                            }
+
+                        } else {
+                            System.out
+                                    .println("Invalid command format. Please use 'attemptChallenge challengeNumber'.");
+                        }
+
+                        break;
+
+                    default:
+                        out.println("Invalid command, yes");
                 }
+
             }
-        } catch (IOException e) {
-            System.out.println("Could not listen on port " + PORT);
+
+        } catch (Exception e) {
             e.printStackTrace();
+        } finally {
+            in.close();
+            out.close();
+            clientSocket.close();
+            serverSocket.close();
         }
+
     }
 
-    private static boolean isUsernameTaken(String username) {
-        try (BufferedReader reader = new BufferedReader(new FileReader(FILE_PATH))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                if (line.contains("Username: " + username + ",")) {
-                    return true;
-                }
-            }
-        } catch (IOException e) {
-            System.out.println("IO error during username check: " + e.getMessage());
-            e.printStackTrace();
-        }
-        return false;
-    }
 
-    private static boolean isSchoolRegistered(String schoolRegNumber) {
-        try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
-                PreparedStatement stmt = conn
-                        .prepareStatement("SELECT * FROM schools WHERE school_registration_number = ?")) {
-            stmt.setString(1, schoolRegNumber);
-            try (ResultSet rs = stmt.executeQuery()) {
-                return rs.next();
-            }
-        } catch (SQLException e) {
-            System.out.println("Database error during school registration number check: " + e.getMessage());
-            e.printStackTrace();
-            return false;
-        }
-    }
 
-    private static boolean registerApplicant(String username, String firstName, String lastName, String email,
-            String dob, String schoolRegNumber, String imageFilePath) {
-        System.out.println("Simulating registration process...");
-        System.out.println("Username: " + username);
-        System.out.println("First Name: " + firstName);
-        System.out.println("Last Name: " + lastName);
-        System.out.println("Email: " + email);
-        System.out.println("Date of Birth: " + dob);
-        System.out.println("School Registration Number: " + schoolRegNumber);
-        System.out.println("Image File Path: " + imageFilePath);
-
-        Path imagePath = Paths.get(imageFilePath);
-        if (Files.exists(imagePath)) {
-            System.out.println("Image file exists at: " + imageFilePath);
-            try {
-                byte[] imageBytes = Files.readAllBytes(imagePath);
-                System.out.println("Read image file successfully, size: " + imageBytes.length + " bytes");
-                try (BufferedWriter writer = new BufferedWriter(new FileWriter(FILE_PATH, true))) {
-                    writer.write(String.format(
-                            "Username: %s, First Name: %s, Last Name: %s, Email: %s, Date of Birth: %s, School Registration Number: %s, Image File Path: %s%n",
-                            username, firstName, lastName, email, dob, schoolRegNumber, imageFilePath));
-                } catch (IOException e) {
-                    System.out.println("IO error during writing to file: " + e.getMessage());
-                    e.printStackTrace();
-                    return false;
-                }
-                return true;
-            } catch (IOException e) {
-                System.out.println("IO error during applicant registration: " + e.getMessage());
-                e.printStackTrace();
-                return false;
-            }
-        } else {
-            System.out.println("Image file does not exist at: " + imageFilePath);
-            return false;
-        }
-    }
-
-    private static void sendConfirmationEmail(String recipientEmail, String schoolRegNumber) {
-        // Replace with your own SMTP server details
-        String senderEmail = "shadianankya979@gmail.com";
-        String senderPassword = "zevj fybi gfie mbnw";
-        String host = "smtp.gmail.com";
-
-        Properties props = new Properties();
-        props.put("mail.smtp.auth", "true");
-        props.put("mail.smtp.starttls.enable", "true");
-        props.put("mail.smtp.host", host);
-        props.put("mail.smtp.port", "587");
-
-        // Create session with authentication
-        Session session = Session.getInstance(props,
-                new javax.mail.Authenticator() {
-                    protected PasswordAuthentication getPasswordAuthentication() {
-                        return new PasswordAuthentication(senderEmail, senderPassword);
-                    }
-                });
-
-        try {
-            // Create a default MimeMessage object
-            MimeMessage message = new MimeMessage(session);
-
-            // Set From: header field of the header
-            message.setFrom(new InternetAddress(senderEmail));
-
-            // Set To: header field of the header
-            message.addRecipient(Message.RecipientType.TO,
-                    new InternetAddress(getSchoolRepresentativeEmail(schoolRegNumber)));
-
-            // Set Subject: header field
-            message.setSubject("Confirmation Required for Applicant Registration");
-
-            // Now set the actual message
-            message.setText("Dear School Representative,\n\n"
-                    + "Please confirm the registration of an applicant with school registration number "
-                    + schoolRegNumber + ".\n\nBest regards,\nYour Organization");
-
-            // Send message
-            Transport.send(message);
-            System.out.println("Email sent successfully to school representative.");
-        } catch (MessagingException mex) {
-            System.out.println("Failed to send email. Exception details:");
-            mex.printStackTrace();
-        }
-    }
-
-    private static String getSchoolRepresentativeEmail(String schoolRegNumber) {
-        try (Connection conn = DriverManager.getConnection(DB_URL, DB_USER, DB_PASSWORD);
-                PreparedStatement stmt = conn.prepareStatement(
-                        "SELECT email_of_representative FROM schools WHERE school_registration_number = ?")) {
-            stmt.setString(1, schoolRegNumber);
-            try (ResultSet rs = stmt.executeQuery()) {
-                if (rs.next()) {
-                    return rs.getString("email_of_representative");
-                }
-            }
-        } catch (SQLException e) {
-            System.out.println("Database error during school representative email retrieval: " + e.getMessage());
-            e.printStackTrace();
-        }
-        return null;
-    }
-}
+    

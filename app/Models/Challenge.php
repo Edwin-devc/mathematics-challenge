@@ -11,11 +11,9 @@ class Challenge extends Model
     use HasFactory;
     protected $table = 'challenges';
     protected $primaryKey = 'challenge_id';
-    public $incrementing = false;
-    protected $keyType = 'string';
+    public $incrementing = true;
 
     protected $fillable = [
-        'challenge_id',
         'name',
         'start_date',
         'end_date',
@@ -26,5 +24,14 @@ class Challenge extends Model
     public function questions(): HasMany
     {
         return $this->hasMany(Question::class, 'challenge_id');
+    }
+    public function answers(): HasMany
+    {
+        return $this->hasMany(Answer::class, 'challenge_id');
+    }
+
+    public function attempts(): HasMany
+    {
+        return $this->hasMany(Attempt::class, 'challenge_id');
     }
 }

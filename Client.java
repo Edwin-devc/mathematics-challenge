@@ -1,90 +1,161 @@
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.net.Socket;
 
 public class Client {
-    private static final String SERVER_ADDRESS = "localhost";
-    private static final int SERVER_PORT = 9876;
+
+    public static void loginInfo() {
+        System.out.print("Login using <login> <email> <password>: ");
+    }
+
+    public static String menuInfo() {
+        return "\n\t\tMenu\n-----------------------------------------------\n- 1. View Applicants \n- 2. Confirm Applicant (confirm yes/no username) \n- Enter choice: ";
+    }
+
+    public static String participantFirstMessage() {
+        return "\n\t\tConfirm\n-----------------------------------------------\n- To login Enter <login> <username> <password> \n- To Register Enter <Register> <username> <firstname> <lastname> <emailAddress> <date_of_birth> <school_registration_number> <image_file.png>";
+    }
+
+    public static String participantLogin() {
+        return " \n\t\tLOGIN\n-----------------------------------------------\n- <username> <email>";
+    }
 
     public static void main(String[] args) {
-        if (args.length == 0) {
-            printUsage();
-            try (BufferedReader reader = new BufferedReader(new InputStreamReader(System.in))) {
-                boolean registered = false;
-                while (!registered) {
-                    System.out.print("Enter command: ");
-                    String input = reader.readLine();
-                    String[] tokens = input.split("\\s+");
-                    if (tokens.length >= 2) {
-                        String command = tokens[0];
-                        if (command.equalsIgnoreCase("Register") && tokens.length == 8) {
-                            String registerCommand = String.format("REGISTER %s %s %s %s %s %s %s",
-                                    tokens[1], tokens[2], tokens[3], tokens[4], tokens[5], tokens[6], tokens[7]);
-                            System.out.println("Sending command to server: " + registerCommand);
-                            registered = sendCommand(registerCommand);
-                        } else if (command.equalsIgnoreCase("ViewChallenges")) {
-                            sendCommand("ViewChallenges");
+        try {
+            Socket clientSocket = new Socket("localhost", 1234);
+
+            BufferedReader in = new BufferedReader(new InputStreamReader(System.in));
+            BufferedReader serverIn = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
+            PrintWriter out = new PrintWriter(clientSocket.getOutputStream(), true);
+            String userInput;
+            boolean loggedIn = false;
+            String loginType = "";
+
+            System.out.println("Use 'login_as <representative> or <participant>' to proceed");
+
+            while ((userInput = in.readLine()) != null) {
+                out.println(userInput);
+                String serverResponse = serverIn.readLine();
+
+                if (serverResponse.equals("acknowledged")) {
+                    serverResponse = serverIn.readLine();
+
+                    if (!loggedIn) {
+                        if (serverResponse.equals("participant")) {
+                            loginType = "participant";
+                            System.out.println("Server response: " + serverResponse);
+                            System.out.println(Client.participantFirstMessage());
+
+                            userInput = in.readLine();
+                            out.println(userInput);
+                            serverResponse = serverIn.readLine();
+                            System.out.println("Server response: " + serverResponse);
+
+                            if (serverResponse.equals("Login successful!")) {
+                                loggedIn = true;
+                                System.out.println("You are now logged in as a participant.");
+                                System.out.println("-Type <ViewChallenges> to view Challenges");
+                                 // Added participant handling loop
+                            while (loggedIn) {
+                                userInput = in.readLine();
+                                out.println(userInput);
+            
+                                // Handle "ViewChallenges" command
+                                
+                                if (userInput.equalsIgnoreCase("ViewChallenges")) {
+                                    StringBuilder challengeResponse = new StringBuilder();
+                                    while ((serverResponse = serverIn.readLine()) != null && !serverResponse.isEmpty()) {
+                                        challengeResponse.append(serverResponse).append("\n");
+                                    }
+                                    System.out.println("Server Response: " + challengeResponse.toString());
+                                    System.out.println("To attempt a challenge, type <attemptChallenge> <challengeNumber>");
+                                }
+
+                                // Handle "attemptChallenge" command
+                                 
+                                if (userInput.startsWith("attemptChallenge")) {
+                                    System.out.println(serverResponse);
+                                    while (true) {
+                                        serverResponse = serverIn.readLine();
+
+                                        // Check if the challenge is completed
+                                        if (serverResponse.equals("Challenge completed!")) {
+                                            System.out.println(serverResponse);
+                                            break;
+                                        }
+
+                                        // Print other responses (question details, etc.)
+                                        System.out.println(serverResponse);
+
+                                        // Look for the "Your answer: " prompt
+                                        if (serverResponse.startsWith("Your answer: ")) {
+                                            userInput = in.readLine();  
+                                            out.println(userInput);     
+                                        }
+                                    }
+
+                                    // Print final responses after challenge completion
+                                    while ((serverResponse = serverIn.readLine()) != null && !serverResponse.isEmpty()) {
+                                        System.out.println(serverResponse);
+                                    }
+                                }
+                             } 
+                            }
+
+                        } else if (serverResponse.equals("representative")) {
+                            loginType = "representative";
+                            System.out.println("Server response: " + serverResponse);
+                            loginInfo();
+
+                            userInput = in.readLine();
+                            out.println(userInput);
+                            serverResponse = serverIn.readLine();
+                            System.out.println("Server response: " + serverResponse);
+
+                            if (serverResponse.equals("Login successful!")) {
+                                loggedIn = true;
+                                System.out.println("You are now logged in as a representative.");
+                                // Display representative menu
+                                System.out.println(Client.menuInfo());
+
+                                while (true) {
+                                    userInput = in.readLine();
+                                    out.println(userInput);
+
+                                    if (userInput.equals("2")) {
+                                        String serverPrompt = serverIn.readLine();
+                                        System.out.print(serverPrompt);
+
+                                        String confirmCommand = in.readLine();
+                                        out.println(confirmCommand);
+                                    }
+
+                                    String serverResponseRep = serverIn.readLine();
+                                    while (serverIn.ready()) {
+                                        serverResponseRep += "\n" + serverIn.readLine();
+                                    }
+
+                                    System.out.println("Server response: " + serverResponseRep);
+                                    System.out.println(Client.menuInfo());
+                                }
+                            }
                         } else {
-                            System.out.println("Unknown command or incorrect number of arguments.");
+                            System.out.println("Invalid login type. Please enter 'login_as <representative> or <participant>'");
                         }
-                    } else {
-                        System.out.println("Invalid input format.");
                     }
-                }
-            } catch (IOException e) {
-                System.out.println("Error reading input: " + e.getMessage());
-                e.printStackTrace();
-            }
-        } else {
-            String command = args[0];
-            if (command.equalsIgnoreCase("Register")) {
-                if (args.length == 8) {
-                    String imagePath = args[7];
-                    String registerCommand = String.format("REGISTER %s %s %s %s %s %s %s",
-                            args[1], args[2], args[3], args[4], args[5], args[6], imagePath.replace(':', '\\'));
-                    System.out.println("Sending command to server: " + registerCommand);
-                    sendCommand(registerCommand);
-                } else {
-                    System.out.println("Invalid number of arguments for Register command.");
-                    printUsage();
-                }
-            } else if (command.equalsIgnoreCase("ViewChallenges")) {
-                sendCommand("ViewChallenges");
-            } else {
-                System.out.println("Unknown command: " + command);
-                printUsage();
-            }
-        }
-    }
-
-    private static void printUsage() {
-        System.out.println("Usage:");
-        System.out.println("Register <username> <firstname> <lastname> <emailAddress> <date_of_birth> <school_registration_number> <image_file.png>");
-        System.out.println("ViewChallenges");
-    }
-
-    private static boolean sendCommand(String command) {
-        try (Socket socket = new Socket(SERVER_ADDRESS, SERVER_PORT);
-             BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-             PrintWriter out = new PrintWriter(socket.getOutputStream(), true)) {
-
-            // Send command to server
-            out.println(command);
-            System.out.println("Command sent to server: " + command);
-
-            // Read and print response from server
-            String response;
-            while ((response = in.readLine()) != null) {
-                System.out.println("Server response: " + response);
-                if (response.equals("Registration successful\n Wait for the confirmation email")) {
-                    return true;
-                } else if (response.equals("Username already taken, please choose another one")) {
-                    return false;
+                }  else {
+                    System.out.println("Server response: " + serverResponse);
                 }
             }
-        } catch (IOException e) {
-            System.out.println("Client exception: " + e.getMessage());
+
+            in.close();
+            serverIn.close();
+            out.close();
+            clientSocket.close();
+
+        } catch (Exception e) {
             e.printStackTrace();
         }
-        return false;
     }
 }
