@@ -38,9 +38,6 @@ class ChallengeController extends Controller
         // ]);
 
         $challenge = new Challenge();
-        // generating challenge_id
-        $random_number = mt_rand(100,900);
-        $challenge->challenge_id = "C" . $random_number;
         $challenge->title = strip_tags($request->input('title'));
         $challenge->start_date = \Carbon\Carbon::createFromFormat('d/m/Y', strip_tags($request->input('start_date')));
         $challenge->end_date = \Carbon\Carbon::createFromFormat('d/m/Y', strip_tags($request->input('end_date')));
@@ -79,8 +76,11 @@ class ChallengeController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(Challenge $challenge)
+    public function destroy(int $id)
     {
-        //
+        $record = Challenge::findOrFail($id);
+        $deleted_challenge_name = $record->title;
+        $record->delete();
+        return redirect()->route('admin.challenges')->with("success", "$deleted_challenge_name deleted successfully.");
     }
 }

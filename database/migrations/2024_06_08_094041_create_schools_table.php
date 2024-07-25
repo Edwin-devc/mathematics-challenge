@@ -10,6 +10,8 @@ return new class extends Migration {
      */
     public function up(): void
     {
+        Schema::disableForeignKeyConstraints();
+
         Schema::create('schools', function (Blueprint $table) {
             $table->string('school_id')->primary();
             $table->string('name');
@@ -19,6 +21,8 @@ return new class extends Migration {
             $table->string('representative_name')->unique();
             $table->timestamps();
         });
+
+        Schema::enableForeignKeyConstraints();
     }
 
     /**
@@ -26,6 +30,10 @@ return new class extends Migration {
      */
     public function down(): void
     {
+        Schema::disableForeignKeyConstraints();
+
         Schema::dropIfExists('schools');
+
+        Schema::enableForeignKeyConstraints();
     }
 };

@@ -13,15 +13,17 @@ return new class extends Migration
     {
         Schema::disableForeignKeyConstraints();
 
-        Schema::create('answers', function (Blueprint $table) {
-            $table->id('answer_id');
-            $table->bigInteger('question_id')->unsigned();
+        Schema::create('attempts', function (Blueprint $table) {
+            $table->id('attempt_id');
+            $table->unsignedBigInteger('participant_id');
             $table->unsignedBigInteger('challenge_id');
-            $table->integer('answer');
+            $table->timestamp('start_time')->nullable();
+            $table->timestamp('end_time')->nullable();
+            $table->unsignedInteger('total_time_taken');
+            $table->integer('total_score');
             $table->timestamps();
 
-            // Ensure the questions table exists and the column is named correctly
-            $table->foreign('question_id')->references('question_id')->on('questions')->onDelete('cascade');
+            $table->foreign('participant_id')->references('participant_id')->on('participants')->onDelete('cascade');
             $table->foreign('challenge_id')->references('challenge_id')->on('challenges')->onDelete('cascade');
         });
 
@@ -35,7 +37,7 @@ return new class extends Migration
     {
         Schema::disableForeignKeyConstraints();
 
-        Schema::dropIfExists('answers');
+        Schema::dropIfExists('attempts');
 
         Schema::enableForeignKeyConstraints();
     }

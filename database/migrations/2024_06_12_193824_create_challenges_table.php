@@ -11,15 +11,20 @@ return new class extends Migration
      */
     public function up(): void
     {
+        Schema::disableForeignKeyConstraints();
+
         Schema::create('challenges', function (Blueprint $table) {
-            $table->string('challenge_id')->primary();
+            $table->id('challenge_id')->primary();
             $table->string('title')->unique();
             $table->date('start_date');
             $table->date('end_date');
             $table->unsignedInteger('duration');
             $table->unsignedInteger('number_of_questions');
+            $table->string('is_valid')->default("true");
             $table->timestamps();
         });
+
+        Schema::enableForeignKeyConstraints();
     }
 
     /**
@@ -27,6 +32,10 @@ return new class extends Migration
      */
     public function down(): void
     {
+        Schema::disableForeignKeyConstraints();
+
         Schema::dropIfExists('challenges');
+        
+        Schema::enableForeignKeyConstraints();
     }
 };

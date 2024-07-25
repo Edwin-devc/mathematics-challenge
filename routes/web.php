@@ -7,16 +7,15 @@ use App\Http\Controllers\QuestionController;
 use App\Http\Controllers\RepresentativeController;
 use App\Http\Controllers\SchoolController;
 use App\Http\Controllers\ChallengeController;
+use App\Http\Controllers\AnswerController;
+use App\Http\Controllers\WinnersController;
+use App\Http\Controllers\AdminController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('welcome');
-});
+Route::get('/', [WinnersController::class, 'index']);
 
 // admin routes
-Route::get('/admin', function () {
-    return view('admin.index');
-})->middleware(['auth', 'verified'])->name('admin');
+Route::get('/admin', [AdminController::class, 'index'])->middleware(['auth', 'verified'])->name('admin');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -44,9 +43,9 @@ Route::get('/admin/questions', [QuestionController::class, 'index'])->name('admi
 
 Route::post('/admin/challenges/questions/upload', [QuestionController::class, 'store'])->name('questions.upload');
 
-Route::get('/admin/answers', function () {
-    return view('admin.answers');
-})->name('admin.answers');
+Route::post('/admin/challenges/answers/upload', [AnswerController::class, 'store'])->name('answers.upload');
+
+Route::get('/admin/answers', [AnswerController::class, 'index'])->name('admin.answers');
 
 Route::get('/admin/representatives', [RepresentativeController::class, 'index'])->name('admin.representatives');
 

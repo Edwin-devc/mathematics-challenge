@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Answer;
 use Illuminate\Http\Request;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Imports\AnswersImport;
 
 class AnswerController extends Controller
 {
@@ -12,7 +14,8 @@ class AnswerController extends Controller
      */
     public function index()
     {
-        //
+        $answers = Answer::with('question')->get();
+        return view("admin.answers", ["answers" => $answers]);
     }
 
     /**
@@ -28,7 +31,13 @@ class AnswerController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $request->validate([
+            'file' => 'required|mimes:xls,xlsx',
+            'challenge_id' => 'required|exists:challenges,challenge_id'
+        ]);
+        $challenge_id = $request->input('challenge_id');
+        Excel::import(new AnswersImport($challenge_id), $request->file('file'));
+        return redirect()->route('admin.answers')->with('success','Answers added successfully.');
     }
 
     /**

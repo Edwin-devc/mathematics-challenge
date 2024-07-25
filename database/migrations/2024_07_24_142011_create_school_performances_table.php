@@ -11,20 +11,21 @@ return new class extends Migration
      */
     public function up(): void
     {
+
         Schema::disableForeignKeyConstraints();
 
-        Schema::create('representatives', function (Blueprint $table) {
-            $table->string('representative_id')->primary();
-            $table->string('name');
-            $table->string('email')->unique();
-            $table->string('password');
+        Schema::create('school_performances', function (Blueprint $table) {
+            $table->id();
             $table->string('school_id');
+            $table->year('year');
+            $table->integer('score');
             $table->timestamps();
-            
+
             $table->foreign('school_id')->references('school_id')->on('schools')->onDelete('cascade');
         });
 
         Schema::enableForeignKeyConstraints();
+
     }
 
     /**
@@ -32,10 +33,12 @@ return new class extends Migration
      */
     public function down(): void
     {
+
         Schema::disableForeignKeyConstraints();
 
-        Schema::dropIfExists('representatives');
+        Schema::dropIfExists('school_performances');
 
         Schema::enableForeignKeyConstraints();
+
     }
 };

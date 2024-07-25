@@ -11,15 +11,19 @@ return new class extends Migration
      */
     public function up(): void
     {
+        Schema::disableForeignKeyConstraints();
+
         Schema::create('questions', function (Blueprint $table) {
             $table->id('question_id')->primary();
             $table->string('text');
             $table->integer('marks');
-            $table->string('challenge_id');
+            $table->unsignedBigInteger('challenge_id');
             $table->timestamps();
 
             $table->foreign('challenge_id')->references('challenge_id')->on('challenges')->onDelete('cascade');
         });
+
+        Schema::enableForeignKeyConstraints();
     }
 
     /**
@@ -27,6 +31,10 @@ return new class extends Migration
      */
     public function down(): void
     {
+        Schema::disableForeignKeyConstraints();
+
         Schema::dropIfExists('questions');
+
+        Schema::enableForeignKeyConstraints();
     }
 };
