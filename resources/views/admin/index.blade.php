@@ -1,145 +1,314 @@
 @extends('admin.layout.layout')
 @section('content')
-<!--  Row 1 -->
-<div class="row">
-    <div class="col-lg-8 d-flex align-items-strech">
-        <div class="card w-100">
-            <div class="card-body">
-                <div class="d-sm-flex d-block align-items-center justify-content-between mb-9">
-                    <div class="mb-3 mb-sm-0">
-                        <h5 class="card-title fw-semibold">Schools Performance</h5>
+    <!--  Row 1 -->
+    <div class="row">
+        <div class="col-lg-8 d-flex align-items-stretch">
+            <div class="card w-100">
+                <div class="card-body">
+                    <div class="d-sm-flex d-block align-items-center justify-content-between mb-9">
+                        <div class="mb-3 mb-sm-0">
+                            <h5 class="card-title fw-semibold">Schools Performance Over Years</h5>
+                        </div>
+                        <div>
+                            <select id="yearSelector" class="form-select">
+                                @foreach ($years as $year)
+                                    <option value="{{ $year }}">{{ $year }}</option>
+                                @endforeach
+                            </select>
+                        </div>
                     </div>
-                    <div id="schoolPerformancesChart"></div>
+                    <div>
+                        <canvas id="schoolPerformancesChart" width="400" height="400"></canvas>
+                        <script>
+                            document.addEventListener('DOMContentLoaded', function() {
+                                const ctx = document.getElementById('schoolPerformancesChart').getContext('2d');
+                                const performances = @json($performances);
+
+                                const yearSelector = document.getElementById('yearSelector');
+                                let chart = null;
+
+                                yearSelector.addEventListener('change', updateChart);
+
+                                function updateChart() {
+                                    const selectedYear = yearSelector.value;
+                                    const labels = [];
+                                    const data = [];
+
+                                    console.log('Selected Year:', selectedYear);
+                                    console.log('Performances:', performances);
+
+                                    for (const [school, entries] of Object.entries(performances)) {
+                                        const entry = entries[selectedYear];
+                                        if (entry) {
+                                            labels.push(school);
+                                            data.push(entry.score);
+                                            console.log(`School: ${school}, Year: ${selectedYear}, Score: ${entry.score}`);
+                                        } else {
+                                            labels.push(school);
+                                            data.push(0); // Show 0 if there is no data for the selected year
+                                            console.log(`School: ${school}, Year: ${selectedYear}, Score: 0 (No data)`);
+                                        }
+                                    }
+
+                                    if (chart) {
+                                        chart.destroy();
+                                    }
+
+                                    chart = new Chart(ctx, {
+                                        type: 'line',
+                                        data: {
+                                            labels: labels,
+                                            datasets: [{
+                                                label: `Scores for ${selectedYear}`,
+                                                data: data,
+                                                fill: false,
+                                                borderColor: 'rgba(54, 162, 235, 1)',
+                                                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                                                borderWidth: 1
+                                            }]
+                                        },
+                                        options: {
+                                            scales: {
+                                                x: {
+                                                    title: {
+                                                        display: true,
+                                                        text: 'School'
+                                                    },
+                                                    ticks: {
+                                                        autoSkip: false
+                                                    }
+                                                },
+                                                y: {
+                                                    beginAtZero: true,
+                                                    max: 100,
+                                                    title: {
+                                                        display: true,
+                                                        text: 'Average Score (%)'
+                                                    }
+                                                }
+                                            },
+                                            plugins: {
+                                                tooltip: {
+                                                    callbacks: {
+                                                        title: function(tooltipItems) {
+                                                            return tooltipItems[0].label;
+                                                        }
+                                                    }
+                                                }
+                                            }
+                                        }
+                                    });
+                                }
+
+                                if (yearSelector.options.length > 0) {
+                                    yearSelector.value = yearSelector.options[0].value;
+                                    updateChart();
+                                }
+                            });
+                        </script>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg-4">
+            <div class="row">
+                <div class="col-lg-12">
+                    <!-- Yearly Breakup -->
+                    <div class="card overflow-hidden bg-primary">
+                        <div class="card-body p-4">
+                            <h5 class="card-title mb-9 fw-semibold fs-6 text-white">Total Schools</h5>
+                            <div class="row align-items-center">
+                                <div class="col-8">
+                                    <h1 class="fw-semibold mb-3 fs-6 text-white">{{ count($total_schools) }}</h1>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-12">
+                    <!-- Yearly Breakup -->
+                    <div class="card overflow-hidden bg-success">
+                        <div class="card-body p-4 text-white">
+                            <h5 class="card-title mb-9 fw-semibold fs-6">Challenges</h5>
+                            <div class="row align-items-center">
+                                <div class="col-8">
+                                    <h1 class="fw-semibold mb-3 fs-6">{{ count($challenges) }}</h1>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-12">
+                    <!-- Yearly Breakup -->
+                    <div class="card overflow-hidden bg-danger">
+                        <div class="card-body p-4">
+                            <h5 class="card-title mb-9 fw-semibold fs-6">Participants</h5>
+                            <div class="row align-items-center">
+                                <div class="col-8">
+                                    <h1 class="fw-semibold mb-3 fs-6 text-primary">{{ count($participants) }}</h1>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-12">
+                    <!-- Yearly Breakup -->
+                    <div class="card overflow-hidden bg-warning">
+                        <div class="card-body p-4">
+                            <h5 class="card-title mb-9 fw-semibold fs-6">Questions</h5>
+                            <div class="row align-items-center">
+                                <div class="col-8">
+                                    <h1 class="fw-semibold mb-3 fs-6 text-primary">{{ count($total_questions) }}</h1>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
             </div>
         </div>
     </div>
-    <div class="col-lg-4">
-        <div class="row">
-            <div class="col-lg-12">
-                <!-- Yearly Breakup -->
-                <div class="card overflow-hidden">
-                    <div class="card-body p-4">
-                        <h5 class="card-title mb-9 fw-semibold text-center">Total Schools</h5>
-                        <div class="row align-items-center">
-                            <div class="col-8">
-                                <h1 class="fw-semibold mb-3 text-center">10</h1>
-                            </div>
 
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="col-lg-12">
-                <!-- Monthly Earnings -->
-                <div class="card">
-                    <div class="card-body">
-                        <div class="row alig n-items-start">
-                            <div class="col-8">
-                                <h5 class="card-title mb-9 fw-semibold"> Monthly Earnings </h5>
-                                <h4 class="fw-semibold mb-3">$6,820</h4>
-                                <div class="d-flex align-items-center pb-1">
-                                    <span class="me-2 rounded-circle bg-light-danger round-20 d-flex align-items-center justify-content-center">
-                                        <i class="ti ti-arrow-down-right text-danger"></i>
-                                    </span>
-                                    <p class="text-dark me-1 fs-3 mb-0">+9%</p>
-                                    <p class="fs-3 mb-0">last year</p>
-                                </div>
-                            </div>
-                            <div class="col-4">
-                                <div class="d-flex justify-content-end">
-                                    <div class="text-white bg-secondary rounded-circle p-6 d-flex align-items-center justify-content-center">
-                                        <i class="ti ti-currency-dollar fs-6"></i>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div id="earning"></div>
-                </div>
+    <div class="card w-100">
+        <div class="card-body p-4">
+            <h5 class="card-title fw-semibold mb-4">Most correctly Answered Questions</h5>
+            <div class="table-responsive">
+                <table class="table text-nowrap mb-0 align-middle table-striped">
+                    <thead class="text-dark fs-4">
+                        <tr>
+                            <th class="border-bottom-0">
+                                <h6 class="fw-semibold mb-0">ID</h6>
+                            </th>
+                            <th class="border-bottom-0">
+                                <h6 class="fw-semibold mb-0">Question</h6>
+                            </th>
+                            <th class="border-bottom-0">
+                                <h6 class="fw-semibold mb-0">Challenge</h6>
+                            </th>
+                            <th class="border-bottom-0">
+                                <h6 class="fw-semibold mb-0 text-center">Total times answered correctly</h6>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @if (count($questions) === 0)
+                            <tr class="text-center">
+                                <td class="border-bottom-0" colspan="7">
+                                    <h6 class="fw-normal mb-0">No questions found</h6>
+                                </td>
+                            </tr>
+                        @endif
+                        @foreach ($questions as $question)
+                            <tr>
+                                <td class="border-bottom-0">
+                                    <h6 class="fw-normal mb-0">{{ $question->question_id }}</h6>
+                                </td>
+                                <td class="border-bottom-0">
+                                    <h6 class="fw-normal mb-0">{{ $question->text }}</h6>
+                                </td>
+                                <td class="border-bottom-0">
+                                    <p class="mb-0 fw-normal">{{ $question->challenge->title }}</p>
+                                </td>
+                                <td class="border-bottom-0">
+                                    <p class="mb-0 fw-normal text-center">{{ $question->total_times_answered_correctly }}
+                                    </p>
+                                </td>
+                            </tr>
+                        @endforeach
+
+                    </tbody>
+                </table>
             </div>
         </div>
     </div>
-</div>
 
-    <script>
-        document.addEventListener('DOMContentLoaded', function () {
-            const performances = @json($performances);
+    <div class="card w-100">
+        <div class="card-body p-4">
+            <h5 class="card-title fw-semibold mb-4">Worst Performing Schools Per Challenge</h5>
+            <div class="table-responsive">
+                <table class="table text-nowrap mb-0 align-middle table-striped">
+                    <thead class="text-dark fs-4">
+                        <tr>
+                            <th class="border-bottom-0">
+                                <h6 class="fw-semibold mb-0">Challenge Title</h6>
+                            </th>
+                            <th class="border-bottom-0">
+                                <h6 class="fw-semibold mb-0">School Name</h6>
+                            </th>
+                            <th class="border-bottom-0">
+                                <h6 class="fw-semibold mb-0">Average Score</h6>
+                            </th>
+                            <th class="border-bottom-0">
+                                <h6 class="fw-semibold mb-0 text-center">Rank</h6>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($results as $result)
+                            <tr>
+                                <td class="border-bottom-0">
+                                    <h6 class="fw-normal mb-0">{{ $result->challenge_title }}</h6>
+                                </td>
+                                <td class="border-bottom-0">
+                                    <h6 class="fw-normal mb-0">{{ $result->school_name }}</h6>
+                                </td>
+                                <td class="border-bottom-0">
+                                    <p class="mb-0 fw-normal">{{ number_format($result->average_score, 2) }}</p>
+                                </td>
+                                <td class="border-bottom-0">
+                                    <p class="mb-0 fw-normal text-center">{{ $result->rank }}
+                                    </p>
+                                </td>
+                            </tr>
+                        @endforeach
 
-            // Define bins for the histogram
-            const bins = [0, 20, 40, 60, 80, 100]; // Adjust bin ranges as needed
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 
-            // Helper function to bin data
-            function getHistogramData(data) {
-                const histogram = new Array(bins.length - 1).fill(0);
-                data.forEach(entry => {
-                    for (let i = 0; i < bins.length - 1; i++) {
-                        if (entry.score >= bins[i] && entry.score < bins[i + 1]) {
-                            histogram[i]++;
-                            break;
-                        }
-                    }
-                });
-                return histogram;
-            }
+    <div class="card w-100">
+        <div class="card-body p-4">
+            <h5 class="card-title fw-semibold mb-4">Best Performing Schools For All Challenges</h5>
+            <div class="table-responsive">
+                <table class="table text-nowrap mb-0 align-middle table-striped">
+                    <thead class="text-dark fs-4">
+                        <tr>
+                            <th class="border-bottom-0">
+                                <h6 class="fw-semibold mb-0">Rank</h6>
+                            </th>
+                            <th class="border-bottom-0">
+                                <h6 class="fw-semibold mb-0">School Name</h6>
+                            </th>
+                            <th class="border-bottom-0">
+                                <h6 class="fw-semibold mb-0">Average Score</h6>
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach ($ranked_results as $ranked_result)
+                            <tr>
+                                <td class="border-bottom-0">
+                                    <h6 class="fw-normal mb-0">{{ $ranked_result->rank }}</h6>
+                                </td>
+                                <td class="border-bottom-0">
+                                    <h6 class="fw-normal mb-0">{{ $ranked_result->school_name }}</h6>
+                                </td>
+                                <td class="border-bottom-0">
+                                    <p class="mb-0 fw-normal">{{ number_format($ranked_result->average_score, 2) }}</p>
+                                </td>
+                            </tr>
+                        @endforeach
 
-            const series = [];
-            for (const [school, data] of Object.entries(performances)) {
-                // Extract the first word of the school name
-                const firstWord = school.split(' ')[0];
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 
-                series.push({
-                    name: firstWord,
-                    data: getHistogramData(data)
-                });
-            }
 
-            const options = {
-                chart: {
-                    type: 'bar',
-                    height: 400,
-                    stacked: true
-                },
-                plotOptions: {
-                    bar: {
-                        horizontal: false,
-                        columnWidth: '55%',
-                        endingShape: 'rounded'
-                    }
-                },
-                dataLabels: {
-                    enabled: false
-                },
-                stroke: {
-                    show: true,
-                    width: 2,
-                    colors: ['transparent']
-                },
-                xaxis: {
-                    categories: bins.slice(0, -1).map((bin, index) => `${bin}-${bins[index + 1]}`), // Labels for bins
-                    title: {
-                        text: 'Score Range'
-                    }
-                },
-                yaxis: {
-                    title: {
-                        text: 'Frequency'
-                    },
-                    min: 0
-                },
-                legend: {
-                    position: 'top'
-                },
-                colors: series.map(() => '#' + Math.floor(Math.random() * 16777215).toString(16)), // Random colors for each series
-                series: series // Add series to options
-            };
-
-            new ApexCharts(document.querySelector("#schoolPerformancesChart"), options).render();
-        });
-    </script>
-
-{{-- <div class="row">
+    {{-- <div class="row">
         <div class="col-lg-4 d-flex align-items-stretch">
             <div class="card w-100">
                 <div class="card-body p-4">
@@ -316,7 +485,7 @@
             </div>
         </div>
     </div> --}}
-{{-- <div class="row">
+    {{-- <div class="row">
         <div class="col-sm-6 col-xl-3">
             <div class="card overflow-hidden rounded-2">
                 <div class="position-relative">

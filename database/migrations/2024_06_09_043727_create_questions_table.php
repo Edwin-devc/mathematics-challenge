@@ -17,6 +17,7 @@ return new class extends Migration
             $table->id('question_id')->primary();
             $table->string('text');
             $table->integer('marks');
+            $table->integer('total_times_answered_correctly')->default(0);
             $table->unsignedBigInteger('challenge_id');
             $table->timestamps();
 

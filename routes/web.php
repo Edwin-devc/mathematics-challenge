@@ -12,6 +12,10 @@ use App\Http\Controllers\WinnersController;
 use App\Http\Controllers\AdminController;
 use Illuminate\Support\Facades\Route;
 
+use App\Http\Controllers\ReportController;
+
+Route::get('/send-challenge-report', [ReportController::class, 'sendChallengeReport']);
+
 Route::get('/', [WinnersController::class, 'index']);
 
 // admin routes

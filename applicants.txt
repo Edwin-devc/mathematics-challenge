@@ -1,4 +1,6 @@
 Username: roger, First Name: kind, Last Name: okay, Email: roger@gmail.com, Date of Birth: 1990-03-05, School Registration Number: 556, Image File Path: black.jpeg
 Username: heart, First Name: kind, Last Name: okay, Email: roger@gmail.com, Date of Birth: 1990-03-05, School Registration Number: 556, Image File Path: black.jpeg
 Username: given, First Name: kind, Last Name: okay, Email: roger@gmail.com, Date of Birth: 1990-03-05, School Registration Number: 556, Image File Path: black.jpeg
-Username: ezra, First Name: charles, Last Name: kawooya, Email: ezra@gmail.com, Date of Birth: 2000-08-09, School Registration Number: 220077, Image File Path: black.jpeg
+Username: monte, First Name: Nasasira, Last Name: Moreen, Email: momo@mailinator.com, Date of Birth: 2005-06-08, School Registration Number: 220075, Image File Path: girl-3.jpeg
+Username: ac, First Name: Namuli, Last Name: Ela, Email: and@mailinator.com, Date of Birth: 2000-04-05, School Registration Number: 220072, Image File Path: girl-4.jpeg
+Username: anx, First Name: anxs, Last Name: anxsus, Email: anx@mailinator.com, Date of Birth: 2000-11-11, School Registration Number: 220077, Image File Path: boy-11.jpeg

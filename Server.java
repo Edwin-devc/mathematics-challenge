@@ -131,12 +131,17 @@ public class Server {
                                 // Fetch challenge details
                                 Challenge challenge = fetchChallengeDetails(challengeNumber, statement);
 
-                                // Fetch random questions for the selected challenge
-                                List<Question> questions = fetchRandomQuestions(challengeNumber, statement);
+                                if (challenge != null) {
+                                    int numberOfQuestions = challenge.getNumberOfQns();
 
-                                // Handle the challenge attempt
-                                handleChallengeAttempt(challenge, questions, out, in, participantId);
+                                    // Fetch random questions for the selected challenge
+                                    List<Question> questions = fetchRandomQuestions(challengeNumber, numberOfQuestions, statement);
 
+                                    // Handle the challenge attempt
+                                    handleChallengeAttempt(challenge, questions, out, in, participantId);
+                                } else {
+                                    out.println("Challenge not found.");
+                                }
                             } else {
                                 out.println("Login required to attempt challenges.");
                             }
@@ -208,6 +213,9 @@ public class Server {
                     String command = in.readLine();
                     confirmApplicant(command, connection);
                     break;
+                case "3":
+                    out.println("exiting...");
+                    return;
                 default:
                     out.println("Invalid choice. Please try again.");
             }
@@ -632,6 +640,7 @@ public class Server {
         }
         return null;
     }
+
     // Participant View Challenges
     public static void viewChallenges(PrintWriter out) {
         String query = "SELECT title, challenge_id FROM challenges where is_valid ='true'";
@@ -683,13 +692,14 @@ public class Server {
         return challenge;
     }
 
-    private static List<Question> fetchRandomQuestions(int challengeNumber, Statement statement) throws SQLException {
+    private static List<Question> fetchRandomQuestions(int challengeNumber, int numberOfQuestions, Statement statement) throws SQLException {
         // SQL query to fetch random questions for the selected challenge
         String query = "SELECT q.question_id, q.text, q.marks, a.answer " +
                 "FROM questions q " +
                 "JOIN answers a ON q.question_id = a.question_id " +
                 "WHERE q.challenge_id = " + challengeNumber +
-                " ORDER BY RAND()"; // Fetch random questions
+                " ORDER BY RAND() " +
+                "LIMIT " + numberOfQuestions; // Fetch the specific number of random questions
 
         ResultSet resultSet = statement.executeQuery(query);
         List<Question> questions = new ArrayList<>();
@@ -728,6 +738,7 @@ public class Server {
             out.println("Marks: " + question.getQuestionMarks());
             out.println("Instructions: Type your answer, type '-' if you do not know");
             out.println("Your answer: ");
+            out.println("----------------------------------------------------");
             String userAnswer = in.readLine().trim();
 
             long questionTimeTaken = (System.currentTimeMillis() - questionTimeStart) / 1000; // Time taken for the
@@ -801,6 +812,7 @@ public class Server {
             out.println("Text: " + question.getQuestionText());
             out.println("Marks: " + question.getQuestionMarks());
             out.println("Time taken: " + question.getQuestionTimeTaken() + " seconds");
+            out.println("----------------------------------------------------");
             // Separate questions
         }
         out.println();
