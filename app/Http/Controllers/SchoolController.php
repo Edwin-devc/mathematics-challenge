@@ -33,7 +33,7 @@ class SchoolController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'file' => 'required|mimes:xlsx'
+            'file' => 'required|mimes:xls,xlsx'
         ]);
 
         Excel::import(new SchoolsImport, $request->file('file'));

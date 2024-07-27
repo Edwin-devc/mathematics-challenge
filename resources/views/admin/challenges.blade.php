@@ -159,7 +159,7 @@
             {{-- view model --}}
 
             <div class="table-responsive">
-                <table class="table text-nowrap mb-0 align-middle">
+                <table class="table text-nowrap mb-0 align-middle table-striped">
                     <thead class="text-dark fs-4">
                         <tr>
                             <th class="border-bottom-0">

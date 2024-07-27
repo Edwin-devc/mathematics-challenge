@@ -17,7 +17,8 @@ class Question extends Model
     protected $fillable = [
         'text',
         'marks',
-        'challenge_id'
+        'challenge_id',
+        'total_times_answered_correctly'
     ];
 
     public function answer(): HasOne

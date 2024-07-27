@@ -28,7 +28,7 @@ class SchoolPerformancesSeeder extends Seeder
                 SchoolPerformance::create([
                     'school_id' => $school->school_id,
                     'year' => $year,
-                    'score' => rand(60, 100), // Random scores between 60 and 100
+                    'score' => rand(40, 100), // Random scores between 40 and 100
                 ]);
             }
         }

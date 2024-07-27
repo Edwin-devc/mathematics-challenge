@@ -6,11 +6,11 @@ import java.net.Socket;
 public class Client {
 
     public static void loginInfo() {
-        System.out.print("Login using <login> <email> <password>: ");
+        System.out.print("Login using <login> <username> <password>: ");
     }
 
     public static String menuInfo() {
-        return "\n\t\tMenu\n-----------------------------------------------\n- 1. View Applicants \n- 2. Confirm Applicant (confirm yes/no username) \n- Enter choice: ";
+        return "\n\t\tMenu\n-----------------------------------------------\n- 1. View Applicants \n- 2. Confirm Applicant (confirm yes/no username) \n- 3. exit \n- Enter choice: ";
     }
 
     public static String participantFirstMessage() {
@@ -52,55 +52,106 @@ public class Client {
                             serverResponse = serverIn.readLine();
                             System.out.println("Server response: " + serverResponse);
 
+                            if (serverResponse.equals("Registration successful. Please wait for the confirmation")) {
+                                System.out.println("Type <exit> to move back to the first interface.");
+                                userInput = in.readLine();
+                                if (userInput.equals("exit")) {
+                                    System.out.println("- Use 'login_as <representative> or <participant>' to proceed");
+                                    loggedIn = false; // Ensure loggedIn is reset
+                                    continue;
+                                }
+                            } else if (serverResponse.equals("Your school is not among the registered schools")) {
+                                System.out.println("Type <exit> to move back to the first interface.");
+                                userInput = in.readLine();
+                                if (userInput.equals("exit")) {
+                                    System.out.println("- Use 'login_as <representative> or <participant>' to proceed");
+                                    loggedIn = false; // Ensure loggedIn is reset
+                                    continue;
+                                }
+                            } else if (serverResponse.equals("You can't be registered after being rejected.lol")) {
+                                System.out.println("Type <exit> to move back to the first interface.");
+                                userInput = in.readLine();
+                                if (userInput.equals("exit")) {
+                                    System.out.println("- Use 'login_as <representative> or <participant>' to proceed");
+                                    loggedIn = false; // Ensure loggedIn is reset
+                                    continue;
+                                }
+                            }
+
                             if (serverResponse.equals("Login successful!")) {
                                 loggedIn = true;
                                 System.out.println("You are now logged in as a participant.");
                                 System.out.println("-Type <ViewChallenges> to view Challenges");
-                                 // Added participant handling loop
-                            while (loggedIn) {
-                                userInput = in.readLine();
-                                out.println(userInput);
-            
-                                // Handle "ViewChallenges" command
-                                
-                                if (userInput.equalsIgnoreCase("ViewChallenges")) {
-                                    StringBuilder challengeResponse = new StringBuilder();
-                                    while ((serverResponse = serverIn.readLine()) != null && !serverResponse.isEmpty()) {
-                                        challengeResponse.append(serverResponse).append("\n");
+
+                                // Added participant handling loop
+                                while (loggedIn) {
+                                    userInput = in.readLine();
+                                    out.println(userInput);
+
+                                    // Handle "ViewChallenges" command
+                                    if (userInput.equalsIgnoreCase("ViewChallenges")) {
+                                        StringBuilder challengeResponse = new StringBuilder();
+                                        while ((serverResponse = serverIn.readLine()) != null
+                                                && !serverResponse.isEmpty()) {
+                                            challengeResponse.append(serverResponse).append("\n");
+                                        }
+                                        System.out.println("Server Response: " + challengeResponse.toString());
+                                        System.out.println(
+                                                "To attempt a challenge, type <attemptChallenge> <challengeNumber>");
                                     }
-                                    System.out.println("Server Response: " + challengeResponse.toString());
-                                    System.out.println("To attempt a challenge, type <attemptChallenge> <challengeNumber>");
-                                }
 
-                                // Handle "attemptChallenge" command
-                                 
-                                if (userInput.startsWith("attemptChallenge")) {
-                                    System.out.println(serverResponse);
-                                    while (true) {
-                                        serverResponse = serverIn.readLine();
+                                    // Handle "attemptChallenge" command
+                                    if (userInput.startsWith("attemptChallenge")) {
+                                        boolean challengeCompleted = false;
 
-                                        // Check if the challenge is completed
-                                        if (serverResponse.equals("Challenge completed!")) {
+                                        while (!challengeCompleted) {
+                                            serverResponse = serverIn.readLine();
                                             System.out.println(serverResponse);
-                                            break;
+
+                                            if (serverResponse.equals(
+                                                    "You have exhausted your maximum attempts for this challenge.")) {
+                                                System.out.println("Type <exit> to terminate.");
+                                                userInput = in.readLine();
+                                                if (userInput.equals("exit")) {
+                                                    loggedIn = false; // Reset login status
+                                                    break; // Exit the challenge loop and return to the initial prompt
+                                                }
+                                            } else if (serverResponse.equals("Challenge completed!")) {
+                                                challengeCompleted = true;
+                                            } else if (serverResponse.startsWith("Your answer: ")) {
+                                                userInput = in.readLine();
+                                                out.println(userInput);
+                                            }
+                                        }
+                                        if (!loggedIn) {
+                                            // Prompt user to type <exit> to return to the initial prompt
+                                            System.out.println("Type <exit> to return to the first interface.");
+                                            userInput = in.readLine();
+                                            if (userInput.equals("exit")) {
+                                                System.out.println(
+                                                        "- Use 'login_as <representative> or <participant>' to proceed");
+                                                loggedIn = false; // Reset login status
+                                                break; // Exit the challenge loop and return to the initial prompt
+                                            }
                                         }
 
-                                        // Print other responses (question details, etc.)
-                                        System.out.println(serverResponse);
-
-                                        // Look for the "Your answer: " prompt
-                                        if (serverResponse.startsWith("Your answer: ")) {
-                                            userInput = in.readLine();  
-                                            out.println(userInput);     
+                                        // Print final responses after challenge completion
+                                        while ((serverResponse = serverIn.readLine()) != null
+                                                && !serverResponse.isEmpty()) {
+                                            System.out.println(serverResponse);
                                         }
-                                    }
 
-                                    // Print final responses after challenge completion
-                                    while ((serverResponse = serverIn.readLine()) != null && !serverResponse.isEmpty()) {
-                                        System.out.println(serverResponse);
+                                        // Prompt user to type <exit> to return to the initial prompt
+                                        System.out.println("Type <exit> to return to the first interface.");
+                                        userInput = in.readLine();
+                                        if (userInput.equals("exit")) {
+                                            System.out.println(
+                                                    "- Use 'login_as <representative> or <participant>' to proceed");
+                                            loggedIn = false; // Reset login status
+                                            continue;
+                                        }
                                     }
                                 }
-                             } 
                             }
 
                         } else if (serverResponse.equals("representative")) {
@@ -116,10 +167,10 @@ public class Client {
                             if (serverResponse.equals("Login successful!")) {
                                 loggedIn = true;
                                 System.out.println("You are now logged in as a representative.");
-                                // Display representative menu
+
                                 System.out.println(Client.menuInfo());
 
-                                while (true) {
+                                while (loggedIn) {
                                     userInput = in.readLine();
                                     out.println(userInput);
 
@@ -137,14 +188,25 @@ public class Client {
                                     }
 
                                     System.out.println("Server response: " + serverResponseRep);
+
+                                    // Check for the "exiting..." message
+                                    if (serverResponseRep.contains("exiting...")) {
+                                        loggedIn = false; // Reset loggedIn status
+                                        System.out.println(
+                                                "- Use 'login_as <representative> or <participant>' to proceed");
+                                        break; // Exit the inner loop and return to the initial prompt
+                                    }
+
                                     System.out.println(Client.menuInfo());
                                 }
+
                             }
                         } else {
-                            System.out.println("Invalid login type. Please enter 'login_as <representative> or <participant>'");
+                            System.out.println(
+                                    "Invalid login type. Please enter 'login_as <representative> or <participant>'");
                         }
                     }
-                }  else {
+                } else {
                     System.out.println("Server response: " + serverResponse);
                 }
             }
@@ -158,4 +220,5 @@ public class Client {
             e.printStackTrace();
         }
     }
+
 }

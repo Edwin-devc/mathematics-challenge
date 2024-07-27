@@ -20,7 +20,7 @@ return new class extends Migration
             $table->date('end_date');
             $table->unsignedInteger('duration');
             $table->unsignedInteger('number_of_questions');
-            $table->string('is_valid')->default("true");
+            $table->string('is_valid')->default("false");
             $table->timestamps();
         });
 
